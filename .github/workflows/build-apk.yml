@@ -23,20 +23,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare web files and Capacitor
+      - name: Build Android APK with Custom Icon
         run: |
-          mkdir -p www assets
+          mkdir -p www
           cp index.html words.js www/
-          pip install pillow
-          python3 -c "from PIL import Image; img = Image.open('icon.png').convert('RGBA').resize((1024, 1024)); img.save('assets/icon-only.png'); img.save('assets/icon-foreground.png'); img.save('assets/icon-background.png')"
           npm init -y
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/assets
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           npx cap init "Кто шпион" "com.beregdima.spygame" --web-dir www
           npx cap add android
-          npx capacitor-assets generate --android
-
-      - name: Build APK
-        run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          convert icon.png -resize 48x48! PNG32:android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert icon.png -resize 72x72! PNG32:android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert icon.png -resize 96x96! PNG32:android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert icon.png -resize 144x144! PNG32:android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert icon.png -resize 192x192! PNG32:android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp android/app/src/main/res/mipmap-$d/ic_launcher.png android/app/src/main/res/mipmap-$d/ic_launcher_round.png
+          done
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
