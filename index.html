@@ -909,5 +909,210 @@ document.addEventListener('pointerdown', () => { if (state.settings.music) Audio
 document.addEventListener('visibilitychange', () => { if (document.hidden) AudioEngine.stopMusic(); else if (state.settings.music) AudioEngine.startMusic(); });
   
 </script>
+<style>
+  .mode-switch { grid-template-columns: repeat(3, 1fr) !important; }
+  .custom-box { background: var(--bg-card); border: 1px solid rgba(62, 198, 184, 0.35); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .custom-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .custom-row:last-child { margin-bottom: 0; }
+  .custom-label { font-size: 13px; font-weight: 700; color: var(--text-main); }
+  .custom-sub { font-size: 11px; color: var(--text-muted); }
+  .mini-counter { display: flex; align-items: center; gap: 12px; }
+  .mini-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(229, 184, 105, 0.4); background: rgba(229, 184, 105, 0.1); color: var(--gold); font-size: 18px; font-weight: 800; cursor: pointer; }
+  .mini-val { font-size: 20px; font-weight: 800; min-width: 28px; text-align: center; }
+  .custom-input-wrap { position: relative; margin-top: 6px; margin-bottom: 12px; }
+  .custom-input { width: 100%; background: var(--bg-card-2); border: 1px solid rgba(62, 198, 184, 0.3); border-radius: 12px; padding: 12px 42px 12px 14px; color: var(--text-main); font-size: 15px; outline: none; user-select: text; }
+  .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gold); font-size: 18px; cursor: pointer; }
+  .spy-hint-badge { margin-top: 14px; padding: 8px 14px; border-radius: 10px; background: rgba(201, 52, 52, 0.12); border: 1px solid rgba(201, 52, 52, 0.35); color: #8c2323; font-size: 13px; font-weight: 800; }
+</style>
+
+<script>
+state.custom = { spyCount: 1, word: '', hint: '', hideWord: false };
+
+(function initCustomModeUI() {
+  const modeSwitch = document.querySelector('#screen-modes .mode-switch');
+  const locArea = document.getElementById('locations-settings-area');
+  if (!modeSwitch || document.getElementById('mode-btn-custom')) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'mode-btn';
+  btn.id = 'mode-btn-custom';
+  btn.textContent = 'Свой';
+  btn.onclick = () => selectGameMode('custom');
+  modeSwitch.appendChild(btn);
+
+  const area = document.createElement('div');
+  area.id = 'custom-settings-area';
+  area.style.display = 'none';
+  area.innerHTML = `
+    <div class="custom-box">
+      <div class="custom-row">
+        <div><div class="custom-label">Игроков</div><div class="custom-sub">От 2 до 50 человек</div></div>
+        <div class="mini-counter">
+          <button class="mini-btn" onclick="changeCustomPlayers(-1)">−</button>
+          <div class="mini-val" id="custom-players-val">${state.playerCount}</div>
+          <button class="mini-btn" onclick="changeCustomPlayers(1)">+</button>
+        </div>
+      </div>
+      <div class="custom-row">
+        <div><div class="custom-label">Шпионов</div><div class="custom-sub">Могут быть даже все</div></div>
+        <div class="mini-counter">
+          <button class="mini-btn" onclick="changeCustomSpies(-1)">−</button>
+          <div class="mini-val" id="custom-spies-val">1</div>
+          <button class="mini-btn" onclick="changeCustomSpies(1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="custom-box">
+      <div class="custom-label">Секретное слово или фраза</div>
+      <div class="custom-input-wrap">
+        <input type="text" class="custom-input" id="custom-word-input" placeholder="Введите слово для мирных..." oninput="state.custom.word = this.value">
+        <button type="button" class="eye-btn" id="custom-eye-btn" onclick="toggleCustomWordVisibility()">👁️</button>
+      </div>
+      <div class="custom-label">Подсказка для шпиона (необязательно)</div>
+      <div class="custom-input-wrap" style="margin-bottom:0;">
+        <input type="text" class="custom-input" style="padding-right:14px;" id="custom-hint-input" placeholder="Например: Категория — Кино" oninput="state.custom.hint = this.value">
+      </div>
+    </div>
+  `;
+  locArea.parentNode.insertBefore(area, locArea.nextSibling);
+})();
+  function changeCustomPlayers(delta) {
+  AudioEngine.play('click');
+  const next = state.playerCount + delta;
+  if (next < 2 || next > 50) return;
+  state.playerCount = next;
+  while (state.players.length < state.playerCount) {
+    state.players.push({ name: `Игрок ${state.players.length + 1}`, score: 0 });
+  }
+  if (state.custom.spyCount > state.playerCount) state.custom.spyCount = state.playerCount;
+  document.getElementById('player-count-display').textContent = state.playerCount;
+  document.getElementById('custom-players-val').textContent = state.playerCount;
+  document.getElementById('custom-spies-val').textContent = state.custom.spyCount;
+}
+
+function changeCustomSpies(delta) {
+  AudioEngine.play('click');
+  const next = state.custom.spyCount + delta;
+  if (next < 0 || next > state.playerCount) return;
+  state.custom.spyCount = next;
+  document.getElementById('custom-spies-val').textContent = next;
+}
+
+function toggleCustomWordVisibility() {
+  AudioEngine.play('click');
+  state.custom.hideWord = !state.custom.hideWord;
+  const inp = document.getElementById('custom-word-input');
+  inp.type = state.custom.hideWord ? 'password' : 'text';
+  document.getElementById('custom-eye-btn').textContent = state.custom.hideWord ? '🙈' : '👁️';
+}
+
+const _origSelectGameMode = selectGameMode;
+selectGameMode = function(mode) {
+  _origSelectGameMode(mode);
+  const cBtn = document.getElementById('mode-btn-custom');
+  const cArea = document.getElementById('custom-settings-area');
+  if (cBtn) cBtn.classList.toggle('active', mode === 'custom');
+  if (cArea) cArea.style.display = mode === 'custom' ? 'block' : 'none';
+  if (mode === 'custom') {
+    if (state.custom.spyCount > state.playerCount) state.custom.spyCount = state.playerCount;
+    document.getElementById('custom-players-val').textContent = state.playerCount;
+    document.getElementById('custom-spies-val').textContent = state.custom.spyCount;
+  }
+};
+
+const _origStartRound = startRound;
+startRound = function() {
+  if (state.mode !== 'custom') {
+    state.round.spyIndices = null;
+    state.round.customHint = '';
+    _origStartRound();
+    state.round.spyIndices = [state.round.spyIndex];
+    return;
+  }
+  const word = (state.custom.word || '').trim();
+  if (!word) { alert('Введите секретное слово для режима «Свой»!'); return; }
+  AudioEngine.play('click');
+
+  const indices = Array.from({ length: state.playerCount }, (_, i) => i);
+  const spies = shuffleArray(indices).slice(0, state.custom.spyCount);
+
+  state.round.pool = [word];
+  state.round.secret = word;
+  state.round.spyIndices = spies;
+  state.round.spyIndex = spies.length > 0 ? spies : -1;
+  state.round.customHint = (state.custom.hint || '').trim();
+  state.round.dealIndex = 0;
+  state.round.cardOpened = false;
+  state.round.usedHint = null;
+  state.round.pointsAwarded = false;
+
+  updateDealUI();
+  goScreen('screen-deal');
+};
+
+const _origUpdateDealUI = updateDealUI;
+updateDealUI = function() {
+  _origUpdateDealUI();
+  if (!state.round.cardOpened) return;
+  const idx = state.round.dealIndex;
+  const spies = state.round.spyIndices || [state.round.spyIndex];
+  const isSpy = spies.includes(idx);
+  const body = document.getElementById('card-opened-body');
+  if (isSpy) {
+    const hintHtml = state.round.customHint ? `<div class="spy-hint-badge">ПОДСКАЗКА: ${state.round.customHint}</div>` : '';
+    body.innerHTML = `<div class="spy-role-title">ШПИОН</div><div class="spy-role-desc">Секретное слово неизвестно! Выведайте его у других.</div>${hintHtml}`;
+  } else {
+    body.innerHTML = `<div class="secret-word-label">СЕКРЕТНОЕ СЛОВО</div><div class="secret-word-value">${state.round.secret}</div>`;
+  }
+};
+
+const _origOpenRoundWordsModal = openRoundWordsModal;
+openRoundWordsModal = function() {
+  if (state.mode === 'custom') {
+    const hintText = state.round.customHint ? `<br><br>Подсказка для шпиона: <strong>${state.round.customHint}</strong>` : '';
+    document.getElementById('round-words-grid').innerHTML = `<div style="grid-column:span 2;color:var(--text-muted);font-size:14px;line-height:1.5;text-align:center;padding:12px;">В режиме «Свой» используется слово от ведущего — общего списка вариантов нет.${hintText}</div>`;
+    openModal('modal-round-words');
+    return;
+  }
+  _origOpenRoundWordsModal();
+};
+
+function getSpyNamesText() {
+  const spies = state.round.spyIndices || [state.round.spyIndex];
+  if (spies.length === 0) return 'Шпионов не было!';
+  if (spies.length === state.playerCount) return 'Все игроки были шпионами!';
+  return spies.map(i => state.players[i].name).join(', ');
+}
+
+const _origOpenSpyGuessScreen = openSpyGuessScreen;
+openSpyGuessScreen = function() {
+  if (state.mode !== 'custom') { _origOpenSpyGuessScreen(); return; }
+  AudioEngine.play('click');
+  const spies = state.round.spyIndices || [];
+  if (spies.length === 0) {
+    showResultModal('neutral', 'РАУНД ЗАВЕРШЁН', 'В этом раунде не было ни одного шпиона!', () => openFinalRevealOnly());
+    return;
+  }
+  const guessed = confirm('Шпион назвал правильное секретное слово?\n\nОК — Да, угадал (+6 шпионам)\nОтмена — Нет, ошибся (+1 мирным)');
+  if (guessed) {
+    spies.forEach(i => { state.players[i].score += 6; });
+    AudioEngine.play('win');
+    showResultModal('win', 'ПОБЕДА ШПИОНОВ!', `Шпионы (${getSpyNamesText()}) угадали слово «${state.round.secret.toUpperCase()}» и получают +6 баллов!`, () => openFinalRevealOnly());
+  } else {
+    for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players[i].score += 1;
+    AudioEngine.play('lose');
+    showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНОВ!', `Шпионы ошиблись! Правильное слово: ${state.round.secret.toUpperCase()}. Мирные получают +1 балл!`, () => openFinalRevealOnly());
+  }
+};
+
+const _origOpenFinalRevealOnly = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  _origOpenFinalRevealOnly();
+  if (state.mode === 'custom') {
+    document.getElementById('reveal-spy-name').textContent = getSpyNamesText();
+  }
+};
+</script>
 </body>
 </html>
+
