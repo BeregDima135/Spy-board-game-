@@ -1856,8 +1856,635 @@ function openGameBoard(animateJump) {
   .reveal-auto-bar { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 12px; }
   .reveal-auto-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--gold)); }
 </style>
+<style>
+  /* Железная прокрутка в окне Настроек */
+  #modal-settings .modal-box {
+    display: block !important;
+    overflow-y: auto !important;
+    max-height: 85dvh !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Панель масштабирования поля */
+  .board-zoom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .zoom-btn {
+    background: rgba(14, 24, 32, 0.95);
+    border: 1px solid rgba(62, 198, 184, 0.45);
+    color: #4ef2e0;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .zoom-btn:active {
+    transform: scale(0.95);
+    background: rgba(62, 198, 184, 0.18);
+  }
+  #board-sizer {
+    position: relative;
+    transform-origin: 0 0;
+  }
+  #board-canvas {
+    transform-origin: 0 0;
+  }
+</style>
+
+<script>
+state.boardZoom = 1;
+
+function applyBoardZoom(newZoom) {
+  const canvas = document.getElementById('board-canvas');
+  const sizer = document.getElementById('board-sizer');
+  const label = document.getElementById('zoom-reset-btn');
+  if (!canvas || !sizer) return;
+
+  state.boardZoom = Math.max(0.32, Math.min(1.6, newZoom));
+  const rawW = parseFloat(canvas.style.width) || canvas.offsetWidth || 600;
+  const rawH = parseFloat(canvas.style.height) || canvas.offsetHeight || 400;
+
+  canvas.style.transform = `scale(${state.boardZoom})`;
+  sizer.style.width = Math.round(rawW * state.boardZoom) + 'px';
+  sizer.style.height = Math.round(rawH * state.boardZoom) + 'px';
+
+  if (label) {
+    label.textContent = `${Math.round(state.boardZoom * 100)}% · Вся карта`;
+  }
+}
+
+function fitEntireBoard() {
+  AudioEngine.play('click');
+  const viewport = document.getElementById('board-viewport');
+  const canvas = document.getElementById('board-canvas');
+  if (!viewport || !canvas) return;
+  const rawW = parseFloat(canvas.style.width) || canvas.offsetWidth || 600;
+  const fitScale = (viewport.clientWidth - 12) / rawW;
+  applyBoardZoom(fitScale < 1 ? fitScale : 1);
+  viewport.scrollLeft = 0;
+}
+
+(function initBoardZoomControls() {
+  const overlay = document.getElementById('modal-board');
+  const viewport = document.getElementById('board-viewport');
+  const canvas = document.getElementById('board-canvas');
+  if (!overlay || !viewport || !canvas) return;
+
+  // Оборачиваем холст в sizer для корректной прокрутки при масштабировании
+  if (!document.getElementById('board-sizer')) {
+    const sizer = document.createElement('div');
+    sizer.id = 'board-sizer';
+    canvas.parentNode.insertBefore(sizer, canvas);
+    sizer.appendChild(canvas);
+  }
+
+  // Добавляем кнопки масштаба над кнопкой возврата
+  if (!document.getElementById('board-zoom-bar')) {
+    const bar = document.createElement('div');
+    bar.id = 'board-zoom-bar';
+    bar.className = 'board-zoom-bar';
+    bar.innerHTML = `
+      <button class="zoom-btn" onclick="AudioEngine.play('click'); applyBoardZoom(state.boardZoom - 0.15)">−</button>
+      <button class="zoom-btn" id="zoom-reset-btn" onclick="fitEntireBoard()">100% · Вся карта</button>
+      <button class="zoom-btn" onclick="AudioEngine.play('click'); applyBoardZoom(state.boardZoom + 0.15)">+</button>
+    `;
+    overlay.insertBefore(bar, overlay.lastElementChild);
+  }
+  
+  // Поддержка жеста двумя пальцами (pinch-to-zoom)
+  let initialDist = 0;
+  let initialZoom = 1;
+  viewport.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      initialDist = Math.hypot(
+        e.touches.item(0).clientX - e.touches.item(1).clientX,
+        e.touches.item(0).clientY - e.touches.item(1).clientY
+      );
+      initialZoom = state.boardZoom;
+    }
+  }, { passive: true });
+
+  viewport.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && initialDist > 0) {
+      const dist = Math.hypot(
+        e.touches.item(0).clientX - e.touches.item(1).clientX,
+        e.touches.item(0).clientY - e.touches.item(1).clientY
+      );
+      applyBoardZoom(initialZoom * (dist / initialDist));
+    }
+  }, { passive: true });
+})();
+
+// Обновляем масштаб при каждом открытии поля
+const _zoomOrigOpenBoard = openGameBoard;
+openGameBoard = function(animateJump) {
+  _zoomOrigOpenBoard(animateJump);
+  applyBoardZoom(state.boardZoom);
+};
+</script>
+<style>
+  /* Экран невероятной победы */
+  .champion-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: radial-gradient(circle at 50% 42%, #1d180c 0%, #060b0f 75%, #020406 100%);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+  .champion-overlay.active {
+    display: flex;
+    animation: champAppear 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes champAppear {
+    0% { opacity: 0; filter: blur(20px) brightness(1.8); transform: scale(1.12); }
+    100% { opacity: 1; filter: blur(0) brightness(1); transform: scale(1); }
+  }
+
+  /* Вращающиеся золотые лучи на фоне */
+  .champ-rays {
+    position: absolute;
+    width: 180vmax;
+    height: 180vmax;
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(229, 184, 105, 0.09) 0deg 10deg,
+      transparent 10deg 20deg
+    );
+    animation: spinRays 26s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes spinRays {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .champ-content {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 420px;
+    width: 100%;
+  }
+
+  .champ-crown-ring {
+    width: 124px;
+    height: 124px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 184, 105, 0.28) 0%, rgba(62, 198, 184, 0.08) 70%);
+    border: 2px solid rgba(229, 184, 105, 0.75);
+    box-shadow: 0 0 45px rgba(229, 184, 105, 0.45), inset 0 0 25px rgba(229, 184, 105, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    margin-bottom: 20px;
+    animation: crownFloat 2.6s ease-in-out infinite;
+  }
+  @keyframes crownFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-9px) scale(1.05); }
+  }
+
+  .champ-kicker {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 3.5px;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-shadow: 0 0 12px rgba(62, 198, 184, 0.6);
+  }
+
+  .champ-name {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff8dc 0%, #f0c97d 48%, #b88b3d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 18px rgba(229, 184, 105, 0.45));
+    margin-bottom: 10px;
+    line-height: 1.1;
+    word-break: break-word;
+  }
+
+  .champ-score-badge {
+    background: rgba(229, 184, 105, 0.14);
+    border: 1px solid rgba(229, 184, 105, 0.5);
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+  }
+
+  .champ-confetti {
+    position: fixed;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 10060;
+    animation: confettiBurst 1.6s cubic-bezier(0.12, 0.85, 0.25, 1) forwards;
+  }
+  @keyframes confettiBurst {
+    0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translate(var(--cx), var(--cy)) rotate(540deg) scale(0.3); }
+  }
+</style>
+
+<script>
+// Отключаем старое текстовое окно победы в середине раунда
+checkTargetScoreWinner = function() {};
+
+function playVictoryFanfare() {
+  if (!state.settings.sound) return;
+  try {
+    AudioEngine.init();
+    const notes = '523.25,659.25,783.99,1046.50'.split(',').map(Number);
+    const now = AudioEngine.ctx.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = AudioEngine.ctx.createOscillator();
+      const gain = AudioEngine.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + i * 0.11);
+      gain.gain.setValueAtTime(0.14, now + i * 0.11);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.11 + 0.75);
+      osc.connect(gain);
+      gain.connect(AudioEngine.ctx.destination);
+      osc.start(now + i * 0.11);
+      osc.stop(now + i * 0.11 + 0.78);
+    });
+  } catch (e) {}
+}
+
+function launchChampionConfetti() {
+  const overlay = document.getElementById('champion-overlay');
+  if (!overlay) return;
+  const colors = '#e5b869,#3ec6b8,#ffffff,#ff5e6c,#f7d07a'.split(',');
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight * 0.42;
+  for (let i = 0; i < 65; i++) {
+    const el = document.createElement('div');
+    el.className = 'champ-confetti';
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    el.style.background = colors.at(i % colors.length);
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 90 + Math.random() * 240;
+    el.style.setProperty('--cx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--cy', (Math.sin(angle) * dist + 70) + 'px');
+    overlay.appendChild(el);
+    setTimeout(() => el.remove(), 1650);
+  }
+}
+
+function showChampionVictoryScreen(winnerName, winnerScore, targetScore) {
+  let overlay = document.getElementById('champion-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'champion-overlay';
+    overlay.className = 'champion-overlay';
+    overlay.innerHTML = `
+      <div class="champ-rays"></div>
+      <div class="champ-content">
+        <div class="champ-crown-ring">👑</div>
+        <div class="champ-kicker">Абсолютный победитель</div>
+        <div class="champ-name" id="champ-winner-name">ИГРОК 1</div>
+        <div class="champ-score-badge" id="champ-winner-score">12 ИЗ 12 БАЛЛОВ</div>
+        <button class="btn-gold" style="box-shadow:0 0 30px rgba(229,184,105,0.45);" onclick="finishChampionMatch()">ЗАВЕРШИТЬ ИГРУ</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  document.getElementById('champ-winner-name').textContent = winnerName;
+  document.getElementById('champ-winner-score').textContent = `${winnerScore} ИЗ ${targetScore} БАЛЛОВ`;
+  overlay.classList.add('active');
+
+  playVictoryFanfare();
+  if (typeof triggerHaptic === 'function') triggerHaptic(new Array(80, 50, 120, 50, 220));
+  launchChampionConfetti();
+  setTimeout(launchChampionConfetti, 550);
+}
+
+function finishChampionMatch() {
+  AudioEngine.play('click');
+  const champ = document.getElementById('champion-overlay');
+  if (champ) champ.classList.remove('active');
+  closeGameBoard();
+
+  // Обнуляем счёт, сохраняем и перестраиваем поле для новой партии
+  state.players.forEach(p => { p.score = 0; });
+  if (typeof saveAllAppSettings === 'function') saveAllAppSettings();
+  if (typeof generateBoardCurves === 'function') generateBoardCurves();
+
+  goScreen('screen-home');
+}
+
+// Перехватываем анимацию прыжков на поле: как только первая фишка встанет на последний круг — открываем экран победы
+const _champOrigOpenBoard = openGameBoard;
+openGameBoard = function(animateJump) {
+  _champOrigOpenBoard(animateJump);
+
+  const target = state.settings.targetScore;
+  if (!animateJump || target <= 0) return;
+
+  const count = state.playerCount;
+  const players = state.players.slice(0, count);
+  const startScores = (state.roundStartScores && state.roundStartScores.length === count)
+    ? state.roundStartScores
+    : players.map(p => p.score);
+
+  let fastestTimeMs = Infinity;
+  let championPlayer = null;
+
+  for (let i = 0; i < count; i++) {
+    const oldS = startScores.at(i) ?? 0;
+    const newS = players.at(i).score;
+    if (newS >= target && oldS < target) {
+      const stepsToFinish = target - oldS;
+      const arrivalTime = 600 + stepsToFinish * 360;
+      if (arrivalTime < fastestTimeMs) {
+        fastestTimeMs = arrivalTime;
+        championPlayer = players.at(i);
+      }
+    }
+  }
+
+  if (championPlayer) {
+    setTimeout(() => {
+      showChampionVictoryScreen(championPlayer.name, championPlayer.score, target);
+    }, fastestTimeMs + 420);
+  }
+};
+
+// Если игровое поле выключено в настройках — показываем экран победы после показа слова
+const _champOrigReveal = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  _champOrigReveal();
+  const target = state.settings.targetScore;
+  if (state.settings.showBoard || target <= 0) return;
+
+  const winners = state.players.slice(0, state.playerCount).filter(p => p.score >= target);
+  if (winners.length > 0) {
+    winners.sort((a, b) => b.score - a.score);
+    const top = winners.at(0);
+    setTimeout(() => {
+      showChampionVictoryScreen(top.name, top.score, target);
+    }, 1850);
+  }
+};
+</script>
+window.activeHopTimers = new Array();
+
+function stopAllBoardHops() {
+  while (window.activeHopTimers.length > 0) {
+    clearInterval(window.activeHopTimers.pop());
+  }
+}
+
+const _exactCloseBoard = closeGameBoard;
+closeGameBoard = function() {
+  stopAllBoardHops();
+  _exactCloseBoard();
+};
+
+openGameBoard = function(animateJump) {
+  stopAllBoardHops();
+  AudioEngine.play('flip');
+  if (!state.boardCurves || state.boardCurves.length === 0) {
+    generateBoardCurves();
+  }
+
+  const overlay = document.getElementById('modal-board');
+  const canvas = document.getElementById('board-canvas');
+  const viewport = document.getElementById('board-viewport');
+  const goalLabel = document.getElementById('board-goal-label');
+  if (!overlay || !canvas || !viewport) return;
+
+  const count = state.playerCount;
+  const players = state.players.slice(0, count);
+  const startScores = (animateJump && state.roundStartScores && state.roundStartScores.length === count)
+    ? state.roundStartScores
+    : players.map(p => p.score);
+
+  const target = state.settings.targetScore;
+  const hasFinish = target > 0;
+  const maxCurrentScore = Math.max(...players.map(p => p.score), 0);
+  // Строго ограничиваем длину трассы финальным кругом, если задан лимит
+  const totalSteps = hasFinish ? target : Math.max(12, maxCurrentScore + 5);
+  if (goalLabel) goalLabel.textContent = hasFinish ? `ФИНИШ: ${target} Б.` : 'РЕЖИМ: БЕЗ ЛИМИТА';
+
+  const stepWidth = 60;
+  const leftPad = 48;
+  const rightPad = 76;
+  const laneHeight = 102;
+  const totalWidth = leftPad + totalSteps * stepWidth + rightPad;
+  const totalHeight = count * laneHeight + 28;
+
+  canvas.style.width = totalWidth + 'px';
+  canvas.style.height = totalHeight + 'px';
+
+  let svgHtml = `<svg width="${totalWidth}" height="${totalHeight}" style="position:absolute;top:0;left:0;overflow:visible;">
+    <defs>
+      <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="finishReactor" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="35%" stop-color="#f7d07a"/>
+        <stop offset="75%" stop-color="#c89643"/>
+        <stop offset="100%" stop-color="#3ec6b8"/>
+      </radialGradient>
+    </defs>`;
+
+  let labelsHtml = '';
+  let tokensHtml = '';
+  const laneCoords = new Array();
+
+  for (let pIdx = 0; pIdx < count; pIdx++) {
+    const color = LANE_COLORS.at(pIdx % LANE_COLORS.length);
+    const baseY = 58 + pIdx * laneHeight;
+    const rawOld = startScores.at(pIdx) ?? players.at(pIdx).score;
+    const rawNew = players.at(pIdx).score;
+    const oldScore = Math.min(rawOld, totalSteps);
+    const newScore = Math.min(rawNew, totalSteps);
+
+    const curve = state.boardCurves.at(pIdx) || { phase: pIdx, freq: 0.7, amp: 14 };
+    const pts = new Array();
+    for (let s = 0; s <= totalSteps; s++) {
+      const x = leftPad + s * stepWidth;
+      const wave = s === 0 ? 0 : Math.sin(s * curve.freq + curve.phase) * curve.amp;
+      const y = Math.round(baseY + wave);
+      pts.push({ x, y });
+    }
+    laneCoords.push({ pts, oldScore, newScore, rawNew, color, pIdx });
+
+    const firstPt = pts.at(0);
+    let d = `M ${firstPt.x} ${firstPt.y}`;
+    for (let s = 0; s < pts.length - 1; s++) {
+      const p1 = pts.at(s);
+      const p2 = pts.at(s + 1);
+      const midX = (p1.x + p2.x) / 2;
+      d += ` C ${midX} ${p1.y}, ${midX} ${p2.y}, ${p2.x} ${p2.y}`;
+    }
+
+    svgHtml += `<path d="${d}" fill="none" stroke="#030608" stroke-width="11" stroke-linecap="round"/>`;
+    svgHtml += `<path d="${d}" fill="none" stroke="${color}" stroke-opacity="0.28" stroke-width="6" stroke-linecap="round"/>`;
+    svgHtml += `<path class="track-energy-flow" d="${d}" fill="none" stroke="${color}" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round"/>`;
+
+    for (let s = 0; s <= totalSteps; s++) {
+      const pt = pts.at(s);
+      const isFinishNode = hasFinish && s === target;
+      const isPassed = s <= oldScore;
+
+      if (isFinishNode) {
+        svgHtml += `
+          <g id="node-${pIdx}-${s}">
+            <circle class="finish-aura" cx="${pt.x}" cy="${pt.y}" r="28" fill="rgba(229,184,105,0.18)" filter="url(#neonGlow)"/>
+            <circle class="finish-orbit-cw" cx="${pt.x}" cy="${pt.y}" r="24" fill="none" stroke="#e5b869" stroke-width="1.8" stroke-dasharray="5 4"/>
+            <circle class="finish-orbit-ccw" cx="${pt.x}" cy="${pt.y}" r="19" fill="none" stroke="#3ec6b8" stroke-width="2" stroke-dasharray="8 4"/>
+            <circle cx="${pt.x}" cy="${pt.y}" r="14" fill="url(#finishReactor)" stroke="#ffffff" stroke-width="2"/>
+            <text x="${pt.x}" y="${pt.y + 4}" text-anchor="middle" fill="#120e07" font-size="11" font-weight="900">👑</text>
+          </g>`;
+      } else {
+        const r = s === 0 ? 12 : 11;
+        const fill = isPassed ? color : '#0b1319';
+        const stroke = isPassed ? '#ffffff' : 'rgba(255,255,255,0.28)';
+        const txtColor = isPassed ? '#05090c' : '#8596a6';
+        svgHtml += `
+          <g id="node-${pIdx}-${s}">
+            <circle cx="${pt.x}" cy="${pt.y}" r="${r + 4}" fill="none" stroke="${color}" stroke-opacity="${isPassed ? '0.45' : '0.12'}" stroke-width="1" stroke-dasharray="2 2"/>
+            <circle class="node-core" cx="${pt.x}" cy="${pt.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+            <text x="${pt.x}" y="${pt.y + 3.5}" text-anchor="middle" fill="${txtColor}" font-size="9" font-weight="900">${s === 0 ? 'S' : s}</text>
+          </g>`;
+      }
+    }
+
+    const pName = players.at(pIdx).name;
+    const pScore = players.at(pIdx).score;
+    labelsHtml += `<div class="lane-label-tag" style="position:absolute;top:${pIdx * laneHeight + 8}px;border-color:${color}66;color:${color};">
+      <span class="lane-dot" style="background:${color};box-shadow:0 0 8px ${color};"></span>
+      ${pName} · ${pScore} б.
+    </div>`;
+
+    const startPt = pts.at(oldScore);
+    const initials = pName.slice(0, 2).toUpperCase();
+    tokensHtml += `<div class="player-token" id="token-${pIdx}" data-name="${pName}" style="left:${startPt.x}px;top:${startPt.y}px;--token-color:${color};">${initials}</div>`;
+  }
+
+  svgHtml += '</svg>';
+  canvas.innerHTML = svgHtml + labelsHtml + tokensHtml;
+  overlay.classList.add('active');
+  if (typeof applyBoardZoom === 'function') applyBoardZoom(state.boardZoom || 1);
+
+  const minStart = Math.min(...laneCoords.map(l => l.oldScore));
+  viewport.scrollLeft = Math.max(0, minStart * stepWidth - 80);
+
+  if (animateJump) {
+    let winnerClaimed = false;
+    setTimeout(() => {
+      laneCoords.forEach(lane => {
+        if (lane.newScore <= lane.oldScore) return;
+        let step = lane.oldScore;
+        let hopCount = 0;
+
+        const hopTimer = setInterval(() => {
+          if (winnerClaimed) {
+            clearInterval(hopTimer);
+            return;
+          }
+
+          step++;
+          hopCount++;
+          const pt = lane.pts.at(step);
+          const tok = document.getElementById(`token-${lane.pIdx}`);
+          if (tok && pt) {
+            tok.style.left = pt.x + 'px';
+            tok.style.top = pt.y + 'px';
+            tok.classList.remove('hopping');
+            void tok.offsetWidth;
+            tok.classList.add('hopping');
+
+            spawnLandingRipple(canvas, pt.x, pt.y, lane.color);
+
+            const nodeG = document.getElementById(`node-${lane.pIdx}-${step}`);
+            if (nodeG && !(hasFinish && step === target)) {
+              const c = nodeG.querySelector('.node-core');
+              const t = nodeG.querySelector('text');
+              if (c) { c.setAttribute('fill', lane.color); c.setAttribute('stroke', '#ffffff'); }
+              if (t) { t.setAttribute('fill', '#05090c'); }
+            }
+
+            playHopTone(hopCount);
+            if (typeof triggerHaptic === 'function') triggerHaptic(22);
+            viewport.scrollTo({ left: Math.max(0, pt.x - viewport.clientWidth * 0.65), behavior: 'smooth' });
+          }
+
+          // Как только первая фишка встала на последний круг — останавливаем все остальные фишки и запускаем победу
+          if (hasFinish && step >= target) {
+            winnerClaimed = true;
+            stopAllBoardHops();
+            AudioEngine.play('win');
+            if (typeof spawnNeonBurst === 'function') spawnNeonBurst('#e5b869');
+            const champ = players.at(lane.pIdx);
+            setTimeout(() => {
+              showChampionVictoryScreen(champ.name, champ.score, target);
+            }, 500);
+            return;
+          }
+
+          if (step >= lane.newScore) {
+            clearInterval(hopTimer);
+          }
+        }, 380);
+
+        window.activeHopTimers.push(hopTimer);
+      });
+    }, 600);
+  }
+};
+
+const _champOrigReveal = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  _champOrigReveal();
+  const target = state.settings.targetScore;
+  if (state.settings.showBoard || target <= 0) return;
+
+  const winners = state.players.slice(0, state.playerCount).filter(p => p.score >= target);
+  if (winners.length > 0) {
+    winners.sort((a, b) => b.score - a.score);
+    const top = winners.at(0);
+    setTimeout(() => {
+      showChampionVictoryScreen(top.name, top.score, target);
+    }, 1850);
+  }
+};
+</script>
 </body>
-</html>
+  </html>
+    
+
+
 
 
   
