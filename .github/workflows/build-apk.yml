@@ -31,13 +31,15 @@ jobs:
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           npx cap init "Кто шпион" "com.beregdima.spygame" --web-dir www
           npx cap add android
+          ICON_FILE=$(ls *.png | head -n 1)
+          echo "Using icon: $ICON_FILE"
           sudo apt-get update && sudo apt-get install -y imagemagick
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
-          convert icon.png -resize 48x48! PNG32:android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-          convert icon.png -resize 72x72! PNG32:android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-          convert icon.png -resize 96x96! PNG32:android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          convert icon.png -resize 144x144! PNG32:android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          convert icon.png -resize 192x192! PNG32:android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          convert "$ICON_FILE" -resize 48x48! PNG32:android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert "$ICON_FILE" -resize 72x72! PNG32:android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert "$ICON_FILE" -resize 96x96! PNG32:android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert "$ICON_FILE" -resize 144x144! PNG32:android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert "$ICON_FILE" -resize 192x192! PNG32:android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
           for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             cp android/app/src/main/res/mipmap-$d/ic_launcher.png android/app/src/main/res/mipmap-$d/ic_launcher_round.png
           done
