@@ -3031,8 +3031,78 @@ openGameBoard = function(animateJump) {
   }, 600);
 };
 </script>
+<script>
+// Надёжно запоминаем очки перед любым начислением баллов
+const _fixStartRound = startRound;
+startRound = function() {
+  state.roundStartScores = state.players.slice(0, state.playerCount).map(p => p.score);
+  _fixStartRound();
+};
+
+// Возвращаем автоматический переход на поле после экрана с загаданным словом
+let _fixBoardTimer = null;
+const _baseRevealFn = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  _baseRevealFn();
+  if (_fixBoardTimer) clearTimeout(_fixBoardTimer);
+
+  const target = state.settings.targetScore;
+  const activePlayers = state.players.slice(0, state.playerCount);
+
+  // Если поле выключено в настройках — показываем только экран победы при достижении лимита
+  if (!state.settings.showBoard) {
+    if (target > 0) {
+      const winners = activePlayers.filter(p => p.score >= target);
+      if (winners.length > 0 && typeof showFinalChampionModal === 'function') {
+        setTimeout(() => showFinalChampionModal(winners, target), 2000);
+      }
+    }
+    return;
+  }
+
+  const startScores = (state.roundStartScores && state.roundStartScores.length === activePlayers.length)
+    ? state.roundStartScores
+    : activePlayers.map(() => 0);
+
+  const hasGain = activePlayers.some((p, i) => p.score > startScores.at(i));
+  if (!hasGain) return;
+
+  // Полоска прогресса на карточке загаданного слова
+  const card = document.querySelector('#final-secret-card .dossier-card');
+  if (card) {
+    let bar = document.getElementById('reveal-auto-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'reveal-auto-bar';
+      bar.className = 'reveal-auto-bar';
+      bar.innerHTML = '<div class="reveal-auto-fill" id="reveal-auto-fill"></div>';
+      card.appendChild(bar);
+    }
+    const fill = document.getElementById('reveal-auto-fill');
+    if (fill) {
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+      requestAnimationFrame(() => {
+        fill.style.transition = 'width 1.6s linear';
+        fill.style.width = '100%';
+      });
+    }
+  }
+
+  // Плавное размытие и открытие тактического поля с прыжками фишек
+  _fixBoardTimer = setTimeout(() => {
+    const revScreen = document.getElementById('screen-reveal');
+    if (revScreen) revScreen.classList.add('blur-out');
+    setTimeout(() => {
+      openGameBoard(true);
+      if (revScreen) revScreen.classList.remove('blur-out');
+    }, 350);
+  }, 1650);
+};
+</script>
 </body>
 </html>
+
 
 
 
