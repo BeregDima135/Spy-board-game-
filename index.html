@@ -1,1319 +1,573 @@
-<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Кто шпион? — Бюро Тайных Дел</title><script src="words.js"></script><style>
-  
-
-
-:root {
---bg-dark: #070b0e;
---bg-card: #0e161b;
---bg-card-2: #141f26;
---gold: #e5b869;
---gold-dark: #b88b3d;
---gold-glow: rgba(229, 184, 105, 0.25);
---teal: #3ec6b8;
---red: #e05252;
---green: #38b87c;
---orange: #e09145;
---paper: #f4eedc;
---paper-text: #1c1915;
---text-main: #f0f2f5;
---text-muted: #8a99a8;
---border-subtle: rgba(255, 255, 255, 0.09);
-}
-• {
-box-sizing: border-box;
-margin: 0;
-padding: 0;
--webkit-tap-highlight-color: transparent;
-user-select: none;
-}
-body {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-background: radial-gradient(circle at 50% 25%, #112329 0%, #070b0e 75%);
-color: var(--text-main);
-min-height: 100dvh;
-display: flex;
-justify-content: center;
-overflow-x: hidden;
-}
-.app-container {
-width: 100%;
-max-width: 480px;
-min-height: 100dvh;
-padding: 16px 18px 24px;
-display: flex;
-flex-direction: column;
-position: relative;
-}
-.screen {
-display: none;
-flex-direction: column;
-flex: 1;
-animation: fadeIn 0.22s ease;
-}
-.screen.active {
-display: flex;
-}
-@keyframes fadeIn {
-from { opacity: 0; transform: translateY(6px); }
-to { opacity: 1; transform: translateY(0); }
-}
-.top-bar {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 18px;
-min-height: 38px;
-}
-.brand-label {
-font-size: 11px;
-letter-spacing: 2px;
-color: var(--gold);
-font-weight: 700;
-text-transform: uppercase;
-}
-.top-actions {
-display: flex;
-align-items: center;
-gap: 10px;
-}
-.pill-btn {
-background: rgba(255, 255, 255, 0.06);
-border: 1px solid var(--border-subtle);
-color: var(--text-main);
-padding: 7px 14px;
-border-radius: 20px;
-font-size: 13px;
-font-weight: 500;
-cursor: pointer;
-transition: 0.15s;
-}
-.pill-btn:active {
-transform: scale(0.96);
-background: rgba(255, 255, 255, 0.12);
-}
-.circle-btn {
-width: 36px;
-height: 36px;
-border-radius: 50%;
-background: rgba(255, 255, 255, 0.06);
-border: 1px solid var(--border-subtle);
-color: var(--text-main);
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 16px;
-cursor: pointer;
-}
-.circle-btn.gold-ring {
-border-color: rgba(229, 184, 105, 0.45);
-color: var(--gold);
-width: auto;
-padding: 0 14px;
-border-radius: 20px;
-font-size: 13px;
-font-weight: 600;
-}
-.hero-section {
-flex: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-text-align: center;
-padding: 10px 0;
-}
-.main-title {
-font-size: 38px;
-font-weight: 900;
-letter-spacing: 1.5px;
-line-height: 1.05;
-text-transform: uppercase;
-margin-bottom: 8px;
-text-shadow: 0 4px 20px rgba(0,0,0,0.6);
-}
-.main-subtitle {
-font-size: 11px;
-letter-spacing: 3px;
-color: var(--teal);
-font-weight: 700;
-text-transform: uppercase;
-margin-bottom: 24px;
-}
-.spy-emblem {
-width: 190px;
-height: 190px;
-border-radius: 50%;
-background: radial-gradient(circle, rgba(229, 184, 105, 0.16) 0%, rgba(14, 22, 27, 0.2) 70%);
-border: 1px solid rgba(229, 184, 105, 0.18);
-display: flex;
-align-items: center;
-justify-content: center;
-position: relative;
-margin-bottom: 26px;
-box-shadow: 0 0 50px rgba(62, 198, 184, 0.08);
-}
-.spy-emblem svg {
-width: 120px;
-height: 120px;
-fill: #090e12;
-filter: drop-shadow(0 0 12px rgba(229, 184, 105, 0.35));
-}
-.stamp-secret {
-border: 2px solid rgba(224, 82, 82, 0.65);
-color: rgba(224, 82, 82, 0.85);
-font-size: 11px;
-font-weight: 800;
-letter-spacing: 2.5px;
-padding: 4px 12px;
-border-radius: 4px;
-transform: rotate(-4deg);
-margin-bottom: 14px;
-text-transform: uppercase;
-}
-.hero-tagline {
-font-size: 14px;
-color: var(--text-muted);
-margin-bottom: 24px;
-max-width: 260px;
-line-height: 1.4;
-}
-.btn-gold {
-width: 100%;
-padding: 16px 20px;
-border-radius: 14px;
-border: none;
-background: linear-gradient(135deg, #f0c97d 0%, #c89643 100%);
-color: #14110b;
-font-size: 15px;
-font-weight: 800;
-letter-spacing: 1px;
-text-transform: uppercase;
-cursor: pointer;
-box-shadow: 0 6px 20px rgba(229, 184, 105, 0.25);
-transition: 0.15s;
-}
-.btn-gold:active {
-transform: scale(0.98);
-}
-.btn-gold:disabled {
-background: #232c33;
-color: #5c6b78;
-box-shadow: none;
-cursor: not-allowed;
-}
-.btn-secondary {
-width: 100%;
-padding: 14px 18px;
-border-radius: 14px;
-border: 1px solid rgba(229, 184, 105, 0.35);
-background: rgba(255, 255, 255, 0.04);
-color: var(--gold);
-font-size: 14px;
-font-weight: 700;
-letter-spacing: 0.8px;
-text-transform: uppercase;
-cursor: pointer;
-}
-.btn-dark {
-padding: 14px 18px;
-border-radius: 14px;
-border: 1px solid var(--border-subtle);
-background: var(--bg-card-2);
-color: var(--text-main);
-font-size: 14px;
-font-weight: 600;
-cursor: pointer;
-}
-.footer-note {
-text-align: center;
-font-size: 10px;
-letter-spacing: 2px;
-color: var(--text-muted);
-margin-top: 16px;
-text-transform: uppercase;
-}
-.step-indicator {
-font-size: 12px;
-font-weight: 700;
-letter-spacing: 1px;
-color: var(--text-muted);
-}
-.step-indicator span {
-color: var(--teal);
-}
-.page-heading {
-font-size: 26px;
-font-weight: 800;
-margin-bottom: 6px;
-}
-.page-sub {
-font-size: 13px;
-color: var(--text-muted);
-margin-bottom: 18px;
-line-height: 1.4;
-}
-.counter-card {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 16px;
-padding: 14px 18px;
-text-align: center;
-margin-bottom: 16px;
-}
-.counter-label {
-font-size: 11px;
-letter-spacing: 1.5px;
-color: var(--text-muted);
-text-transform: uppercase;
-margin-bottom: 8px;
-}
-.counter-controls {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 28px;
-}
-.counter-btn {
-width: 42px;
-height: 42px;
-border-radius: 12px;
-border: 1px solid rgba(229, 184, 105, 0.35);
-background: rgba(229, 184, 105, 0.08);
-color: var(--gold);
-font-size: 22px;
-font-weight: 700;
-cursor: pointer;
-}
-.counter-value {
-font-size: 32px;
-font-weight: 800;
-min-width: 48px;
-}
-.counter-hint {
-font-size: 11px;
-color: var(--text-muted);
-margin-top: 6px;
-}
-.players-list {
-flex: 1;
-overflow-y: auto;
-display: flex;
-flex-direction: column;
-gap: 10px;
-margin-bottom: 16px;
-padding-right: 2px;
-}
-.player-row {
-display: flex;
-align-items: center;
-gap: 10px;
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-padding: 10px 14px;
-border-radius: 12px;
-}
-.player-row label {
-font-size: 13px;
-color: var(--text-muted);
-min-width: 68px;
-font-weight: 600;
-}
-.player-row input {
-flex: 1;
-background: transparent;
-border: none;
-color: var(--text-main);
-font-size: 15px;
-outline: none;
-user-select: text;
-}
-.bottom-row {
-display: flex;
-gap: 10px;
-}
-.mode-switch {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin-bottom: 16px;
-}
-.mode-btn {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 14px;
-padding: 16px 12px;
-color: var(--text-main);
-font-size: 15px;
-font-weight: 700;
-cursor: pointer;
-text-align: center;
-transition: 0.15s;
-}
-.mode-btn.active {
-border-color: var(--gold);
-background: rgba(229, 184, 105, 0.12);
-color: var(--gold);
-}
-.diff-switch {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 8px;
-margin-bottom: 16px;
-}
-.diff-btn {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 12px;
-padding: 12px 6px;
-font-size: 13px;
-font-weight: 700;
-color: var(--text-muted);
-cursor: pointer;
-text-align: center;
-}
-.diff-btn.active[data-diff="easy"] {
-border-color: var(--green);
-background: rgba(56, 184, 124, 0.14);
-color: var(--green);
-}
-.diff-btn.active[data-diff="medium"] {
-border-color: var(--orange);
-background: rgba(224, 145, 69, 0.14);
-color: var(--orange);
-}
-.diff-btn.active[data-diff="hard"] {
-border-color: var(--red);
-background: rgba(224, 82, 82, 0.14);
-color: var(--red);
-}
-.cat-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin-bottom: 18px;
-}
-.cat-btn {
-background: var(--bg-card);
-border: 1px solid rgba(56, 184, 124, 0.35);
-border-radius: 12px;
-padding: 14px 10px;
-font-size: 14px;
-font-weight: 600;
-color: var(--text-main);
-cursor: pointer;
-text-align: center;
-transition: 0.15s;
-}
-.cat-grid.theme-easy .cat-btn { border-color: rgba(56, 184, 124, 0.35); }
-.cat-grid.theme-easy .cat-btn.active { border-color: var(--green); background: rgba(56, 184, 124, 0.18); color: #fff; }
-.cat-grid.theme-medium .cat-btn { border-color: rgba(224, 145, 69, 0.35); }
-.cat-grid.theme-medium .cat-btn.active { border-color: var(--orange); background: rgba(224, 145, 69, 0.18); color: #fff; }
-.cat-grid.theme-hard .cat-btn { border-color: rgba(224, 82, 82, 0.35); }
-.cat-grid.theme-hard .cat-btn.active { border-color: var(--red); background: rgba(224, 82, 82, 0.18); color: #fff; }
-.locations-info-box {
-background: var(--bg-card);
-border: 1px solid rgba(229, 184, 105, 0.25);
-border-radius: 14px;
-padding: 18px;
-text-align: center;
-color: var(--text-muted);
-font-size: 14px;
-line-height: 1.5;
-margin-bottom: 18px;
-}
-.dossier-card {
-flex: 1;
-border-radius: 20px;
-margin: 6px 0 18px;
-padding: 24px 20px;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: space-between;
-text-align: center;
-cursor: pointer;
-transition: transform 0.2s, background 0.2s;
-position: relative;
-}
-.dossier-card.closed {
-background: linear-gradient(160deg, #101b22 0%, #090f13 100%);
-border: 1.5px solid rgba(229, 184, 105, 0.4);
-box-shadow: 0 12px 35px rgba(0,0,0,0.6);
-}
-.dossier-card.opened {
-background: var(--paper);
-color: var(--paper-text);
-border: 2px solid #d8ccb0;
-box-shadow: 0 12px 35px rgba(0,0,0,0.6);
-}
-.dossier-badge {
-border: 1px solid rgba(229, 184, 105, 0.4);
-color: var(--gold);
-font-size: 11px;
-letter-spacing: 2.5px;
-padding: 4px 12px;
-border-radius: 6px;
-font-weight: 700;
-}
-.top-secret-stamp {
-border: 3px solid #d94343;
-color: #d94343;
-font-size: 24px;
-font-weight: 900;
-letter-spacing: 3px;
-padding: 8px 18px;
-border-radius: 8px;
-transform: rotate(-12deg);
-opacity: 0.9;
-}
-.card-player-name {
-font-size: 22px;
-font-weight: 800;
-letter-spacing: 1px;
-margin-bottom: 6px;
-}
-.card-tap-hint {
-font-size: 12px;
-letter-spacing: 1.2px;
-color: var(--text-muted);
-text-transform: uppercase;
-}
-.dossier-card.opened .card-tap-hint {
-color: #7c7262;
-}
-.secret-word-label {
-font-size: 11px;
-letter-spacing: 2px;
-color: #7c7262;
-font-weight: 700;
-text-transform: uppercase;
-margin-bottom: 8px;
-}
-.secret-word-value {
-font-size: 30px;
-font-weight: 900;
-color: #171410;
-text-transform: uppercase;
-word-break: break-word;
-}
-.spy-role-title {
-font-size: 34px;
-font-weight: 900;
-color: #c93434;
-letter-spacing: 2px;
-margin-bottom: 8px;
-}
-.spy-role-desc {
-font-size: 14px;
-color: #4f483e;
-max-width: 240px;
-line-height: 1.4;
-}
-.interrogation-box {
-flex: 1;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-text-align: center;
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 20px;
-padding: 24px;
-margin-bottom: 18px;
-}
-.traitor-header {
-text-align: center;
-margin-bottom: 14px;
-}
-.traitor-sub {
-font-size: 11px;
-letter-spacing: 2px;
-color: var(--text-muted);
-font-weight: 700;
-}
-.traitor-name {
-font-size: 28px;
-font-weight: 900;
-color: var(--red);
-text-transform: uppercase;
-}
-.letter-search-box {
-margin-bottom: 12px;
-}
-.letter-search-box label {
-display: block;
-font-size: 12px;
-color: var(--text-muted);
-margin-bottom: 6px;
-}
-.letter-search-box input {
-width: 100%;
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 12px;
-padding: 12px 14px;
-color: var(--text-main);
-font-size: 15px;
-outline: none;
-user-select: text;
-}
-.guess-words-scroll {
-max-height: 210px;
-overflow-y: auto;
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 8px;
-margin-bottom: 14px;
-padding-right: 2px;
-}
-.guess-word-card {
-background: var(--paper);
-color: var(--paper-text);
-border: none;
-border-radius: 10px;
-padding: 10px 10px;
-font-size: 13px;
-font-weight: 700;
-text-align: left;
-cursor: pointer;
-transition: 0.1s;
-}
-.guess-word-card span {
-color: #8c806c;
-font-weight: 600;
-margin-right: 4px;
-}
-.hints-panel {
-background: var(--bg-card);
-border: 1px solid var(--border-subtle);
-border-radius: 14px;
-padding: 12px;
-margin-bottom: 14px;
-}
-.hints-title {
-font-size: 11px;
-letter-spacing: 1.5px;
-color: var(--gold);
-text-align: center;
-font-weight: 700;
-margin-bottom: 10px;
-}
-.hints-buttons {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 8px;
-}
-.hint-btn {
-background: var(--bg-card-2);
-border: 1px solid var(--border-subtle);
-color: var(--text-main);
-padding: 10px 6px;
-border-radius: 10px;
-font-size: 13px;
-font-weight: 600;
-cursor: pointer;
-}
-.hint-btn.used {
-border-color: var(--gold);
-color: var(--gold);
-background: rgba(229, 184, 105, 0.12);
-}
-.hint-btn:disabled:not(.used) {
-opacity: 0.35;
-cursor: not-allowed;
-}
-.hint-chips {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 10px;
-justify-content: center;
-}
-.hint-chip {
-background: #1b2831;
-border: 1px solid rgba(229, 184, 105, 0.4);
-color: var(--text-main);
-padding: 8px 12px;
-border-radius: 10px;
-font-size: 13px;
-font-weight: 600;
-cursor: pointer;
-}
-.vote-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin: 18px 0;
-}
-.vote-candidate {
-background: var(--bg-card-2);
-border: 1.5px solid var(--border-subtle);
-color: var(--text-main);
-padding: 16px 12px;
-border-radius: 14px;
-font-size: 15px;
-font-weight: 700;
-cursor: pointer;
-}
-.vote-candidate.selected {
-border-color: var(--gold);
-background: rgba(229, 184, 105, 0.14);
-color: var(--gold);
-}
-.modal-overlay {
-display: none;
-position: fixed;
-inset: 0;
-background: rgba(4, 7, 10, 0.85);
-backdrop-filter: blur(4px);
-z-index: 100;
-align-items: center;
-justify-content: center;
-padding: 18px;
-}
-.modal-overlay.active {
-display: flex;
-}
-.modal-box {
-width: 100%;
-max-width: 440px;
-max-height: 88dvh;
-background: #0d151a;
-border: 1px solid rgba(229, 184, 105, 0.3);
-border-radius: 20px;
-padding: 20px;
-display: flex;
-flex-direction: column;
-overflow: hidden;
-box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-}
-.modal-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 14px;
-}
-.modal-title {
-font-size: 18px;
-font-weight: 800;
-color: var(--gold);
-letter-spacing: 1px;
-text-transform: uppercase;
-}
-.modal-scroll {
-overflow-y: auto;
-flex: 1;
-padding-right: 4px;
-}
-.setting-group {
-margin-bottom: 16px;
-}
-.setting-label {
-font-size: 11px;
-letter-spacing: 1.5px;
-color: var(--text-muted);
-margin-bottom: 8px;
-text-transform: uppercase;
-}
-.toggle-full-btn {
-width: 100%;
-padding: 14px;
-border-radius: 12px;
-background: var(--bg-card-2);
-border: 1px solid var(--border-subtle);
-color: var(--text-main);
-font-size: 15px;
-font-weight: 600;
-cursor: pointer;
-}
-.db-selectors {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 10px;
-margin-bottom: 10px;
-}
-.db-select {
-width: 100%;
-background: var(--bg-card-2);
-border: 1px solid var(--border-subtle);
-color: var(--text-main);
-padding: 10px 12px;
-border-radius: 12px;
-font-size: 14px;
-font-weight: 600;
-outline: none;
-}
-.db-words-grid {
-display: grid;
-grid-template-columns: 1fr 1fr;
-gap: 8px;
-}
-.db-word-item {
-background: var(--bg-card-2);
-border: 1px solid var(--border-subtle);
-padding: 10px 12px;
-border-radius: 10px;
-font-size: 13px;
-color: var(--text-main);
-}
-.slider-row {
-margin-bottom: 14px;
-}
-.slider-top {
-display: flex;
-justify-content: space-between;
-font-size: 14px;
-font-weight: 600;
-margin-bottom: 6px;
-}
-.slider-top span:last-child {
-color: var(--gold);
-}
-input[type="range"] {
-width: 100%;
-accent-color: var(--gold);
-}
-.result-card {
-text-align: center;
-padding: 28px 20px;
-}
-.result-card.win {
-box-shadow: inset 0 0 40px rgba(56, 184, 124, 0.15);
-border-color: rgba(56, 184, 124, 0.5);
-}
-.result-card.lose {
-box-shadow: inset 0 0 40px rgba(224, 82, 82, 0.15);
-border-color: rgba(224, 82, 82, 0.5);
-}
-.result-title {
-font-size: 26px;
-font-weight: 900;
-letter-spacing: 1px;
-margin-bottom: 12px;
-text-transform: uppercase;
-}
-.result-text {
-font-size: 15px;
-color: #d0d7de;
-line-height: 1.5;
-margin-bottom: 22px;
-}
-.score-rule-box {
-background: rgba(229, 184, 105, 0.06);
-border: 1px solid rgba(229, 184, 105, 0.35);
-border-radius: 12px;
-padding: 12px;
-font-size: 12px;
-color: var(--text-muted);
-line-height: 1.45;
-margin-bottom: 14px;
-}
-.score-rule-box strong {
-color: var(--gold);
-display: block;
-margin-bottom: 4px;
-letter-spacing: 1px;
-}
-.score-item {
-display: flex;
-justify-content: space-between;
-align-items: center;
-background: var(--bg-card-2);
-padding: 12px 14px;
-border-radius: 12px;
-margin-bottom: 8px;
-font-weight: 700;
-}
-.score-item span:last-child {
-color: var(--gold);
-}
-
-
-
-Бюро тайных дел
-
-Базы слов
-⚙️
-
-Кто шпион?
-Секретный агент среди нас
-Совершенно секретно
-Все знают секрет. Кроме одного из вас.
-ИГРАТЬ ▶
-Один телефон · Много секретов
-< Назад
-01 / 02 · УЧАСТНИКИ
-Соберите команду
-Кто сегодня за столом? Выберите состав и впишите имена.
-Количество игроков
-
-−
-4
-+
-
-4–12 игроков
-Сбросить
-ВЫБРАТЬ РЕЖИМ →
-
-< Участники
-Счёт
-ВЫБОР РЕЖИМА
-Локации
-Классика
-Лёгкие
-Средние
-Хардкорные
-Еда
-Животные
-Растения
-Профессии
-Предметы
-Болезни
-Смешанные ⚙️
-
-Режим «Локации» (27 мест)
-
-
-Мирные игроки получают название одного и того же места (например: Аэропорт, Подводная лодка, Казино). Шпион не знает локацию и должен вычислить её по вопросам.
-
-РАЗДАТЬ РОЛИ
-
-ИГРОК 1 (1 ИЗ 4)
-
-Список
-Сброс
-
-ДОСЬЕ
-TOP SECRET
-СЕКРЕТНОЕ СЛОВО
-АМБРОЗИЯ
-ИГРОК 1
-НАЖМИ, ЧТОБЫ ОТКРЫТЬ
-
-СНАЧАЛА ОТКРОЙТЕ КАРТУ
-СТАДИЯ ДОПРОСА
-
-Список
-В меню
-
-Все роли выданы!
-
-Задавайте друг другу вопросы по очереди. Не раскрывайте секрет напрямую! Когда будете готовы — вскрывайте досье.
-
-ТАЙНОЕ ГОЛОСОВАНИЕ
-ШПИОН ГОВОРИТ СЛОВО
-
-ГОЛОС: 1 ИЗ 4
-Отмена
-ИГРОК 1, ВАШ ГОЛОС
-Выберите, кого вы считаете шпионом. Голос тайный!
-
-ВЫБЕРИТЕ ПОДОЗРЕВАЕМОГО
-ДЕЛО РАСКРЫТО
-Счёт
-ПРЕДАТЕЛЬ
-ИГРОК 4
-ВЫБЕРИТЕ СЛОВО · Переход по первой букве
-ПОДСКАЗКА ДЛЯ ШПИОНА
-
-Половина
-5 слов
-3 слова
-
-
-
-ЗАГАДАННОЕ СЛОВО
-УБОРЩИК
-
-ИГРАТЬ СНОВА
-Выбор режима
-
-Базы слов
-✕
-
-
-
-Лёгкие
-Средние
-Хардкорные
-
-
-Еда
-Животные
-Растения
-Профессии
-Предметы
-Болезни
-Смешанные
-Локации
-
-
-
-
-
-
-
-Настройки
-✕
-
-
-Звук игры
-Звук: Вкл
-
-
-Режим голосования
-Голосование: Вкл
-
-
-Игра до баллов
-
-
-−6
-0
-+6
-
-0 = БЕЗ ЛИМИТА
-
-
-Сбросить счёт всех игроков
-
-СМЕШАННЫЕ: ЛЁГКИЕ
-✕
-
-Настройте ползунками количество слов из каждой категории:
-
-
-РАНДОМ
-СОХРАНИТЬ
-
-
-Текущий счёт
-✕
-
-Цель игры: Без лимита
-
-КОГДА НАЧИСЛЯЮТСЯ БАЛЛЫ
-Угадал без подсказки: Шпион +6 (ошибка: мирным +1).
-
-Половина: Шпион +3 (ошибка: мирным +2).
-
-5 слов: Шпион +1 (ошибка: мирным +4).
-
-3 слова: Шпион +0 (ошибка: мирным +6).
-
-Голосование: выгнали шпиона — мирным +1; выгнали мирного — шпиону +6.
-
-
-
-ПОБЕДА ШПИОНА!
-Текст результата
-ПРОДОЛЖИТЬ
-
-Варианты раунда
-✕
-
-
-
-
-
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Кто шпион? — Бюро Тайных Дел</title>
+<script src="words.js"></script>
+<style>
+  :root {
+    --bg-dark: #070b0e;
+    --bg-card: #0e161b;
+    --bg-card-2: #141f26;
+    --gold: #e5b869;
+    --gold-dark: #b88b3d;
+    --teal: #3ec6b8;
+    --red: #e05252;
+    --green: #38b87c;
+    --orange: #e09145;
+    --paper: #f4eedc;
+    --paper-text: #1c1915;
+    --text-main: #f0f2f5;
+    --text-muted: #8a99a8;
+    --border-subtle: rgba(255, 255, 255, 0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(circle at 50% 25%, #112329 0%, #070b0e 75%);
+    color: var(--text-main);
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+  .app-container { width: 100%; max-width: 480px; min-height: 100dvh; padding: 16px 18px 24px; display: flex; flex-direction: column; position: relative; }
+  .screen { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.22s ease; }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; min-height: 38px; }
+  .brand-label { font-size: 11px; letter-spacing: 2px; color: var(--gold); font-weight: 700; text-transform: uppercase; }
+  .top-actions { display: flex; align-items: center; gap: 10px; }
+  .pill-btn { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .pill-btn:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.12); }
+  .circle-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-subtle); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+  .circle-btn.gold-ring { border-color: rgba(229, 184, 105, 0.45); color: var(--gold); width: auto; padding: 0 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  .hero-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 0; }
+  .main-title { font-size: 38px; font-weight: 900; letter-spacing: 1.5px; line-height: 1.05; text-transform: uppercase; margin-bottom: 8px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+  .main-subtitle { font-size: 11px; letter-spacing: 3px; color: var(--teal); font-weight: 700; text-transform: uppercase; margin-bottom: 24px; }
+  .spy-emblem { width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(229, 184, 105, 0.16) 0%, rgba(14, 22, 27, 0.2) 70%); border: 1px solid rgba(229, 184, 105, 0.18); display: flex; align-items: center; justify-content: center; margin-bottom: 26px; }
+  .spy-emblem svg { width: 120px; height: 120px; fill: #090e12; filter: drop-shadow(0 0 12px rgba(229, 184, 105, 0.35)); }
+  .stamp-secret { border: 2px solid rgba(224, 82, 82, 0.65); color: rgba(224, 82, 82, 0.85); font-size: 11px; font-weight: 800; letter-spacing: 2.5px; padding: 4px 12px; border-radius: 4px; transform: rotate(-4deg); margin-bottom: 14px; text-transform: uppercase; }
+  .hero-tagline { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; max-width: 260px; line-height: 1.4; }
+  .btn-gold { width: 100%; padding: 16px 20px; border-radius: 14px; border: none; background: linear-gradient(135deg, #f0c97d 0%, #c89643 100%); color: #14110b; font-size: 15px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 20px rgba(229, 184, 105, 0.25); }
+  .btn-gold:disabled { background: #232c33; color: #5c6b78; box-shadow: none; cursor: not-allowed; }
+  .btn-secondary { width: 100%; padding: 14px 18px; border-radius: 14px; border: 1px solid rgba(229, 184, 105, 0.35); background: rgba(255, 255, 255, 0.04); color: var(--gold); font-size: 14px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; }
+  .btn-dark { padding: 14px 18px; border-radius: 14px; border: 1px solid var(--border-subtle); background: var(--bg-card-2); color: var(--text-main); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .footer-note { text-align: center; font-size: 10px; letter-spacing: 2px; color: var(--text-muted); margin-top: 16px; text-transform: uppercase; }
+  .step-indicator { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); }
+  .step-indicator span { color: var(--teal); }
+  .page-heading { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4; }
+  .counter-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 14px 18px; text-align: center; margin-bottom: 16px; }
+  .counter-label { font-size: 11px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+  .counter-controls { display: flex; align-items: center; justify-content: center; gap: 28px; }
+  .counter-btn { width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(229, 184, 105, 0.35); background: rgba(229, 184, 105, 0.08); color: var(--gold); font-size: 22px; font-weight: 700; cursor: pointer; }
+  .counter-value { font-size: 32px; font-weight: 800; min-width: 48px; }
+  .counter-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .players-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .player-row { display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: 12px; }
+  .player-row label { font-size: 13px; color: var(--text-muted); min-width: 68px; font-weight: 600; }
+  .player-row input { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 15px; outline: none; user-select: text; }
+  .bottom-row { display: flex; gap: 10px; }
+    .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .mode-btn { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 16px 12px; color: var(--text-main); font-size: 15px; font-weight: 700; cursor: pointer; text-align: center; }
+  .mode-btn.active { border-color: var(--gold); background: rgba(229, 184, 105, 0.12); color: var(--gold); }
+  .diff-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .diff-btn { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 6px; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer; text-align: center; }
+  .diff-btn.active[data-diff="easy"] { border-color: var(--green); background: rgba(56, 184, 124, 0.14); color: var(--green); }
+  .diff-btn.active[data-diff="medium"] { border-color: var(--orange); background: rgba(224, 145, 69, 0.14); color: var(--orange); }
+  .diff-btn.active[data-diff="hard"] { border-color: var(--red); background: rgba(224, 82, 82, 0.14); color: var(--red); }
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .cat-btn { background: var(--bg-card); border: 1px solid rgba(56, 184, 124, 0.35); border-radius: 12px; padding: 14px 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; text-align: center; }
+  .cat-grid.theme-easy .cat-btn { border-color: rgba(56, 184, 124, 0.35); }
+  .cat-grid.theme-easy .cat-btn.active { border-color: var(--green); background: rgba(56, 184, 124, 0.18); color: #fff; }
+  .cat-grid.theme-medium .cat-btn { border-color: rgba(224, 145, 69, 0.35); }
+  .cat-grid.theme-medium .cat-btn.active { border-color: var(--orange); background: rgba(224, 145, 69, 0.18); color: #fff; }
+  .cat-grid.theme-hard .cat-btn { border-color: rgba(224, 82, 82, 0.35); }
+  .cat-grid.theme-hard .cat-btn.active { border-color: var(--red); background: rgba(224, 82, 82, 0.18); color: #fff; }
+  .locations-info-box { background: var(--bg-card); border: 1px solid rgba(229, 184, 105, 0.25); border-radius: 14px; padding: 18px; text-align: center; color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 18px; }
+  .dossier-card { flex: 1; border-radius: 20px; margin: 6px 0 18px; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; cursor: pointer; }
+  .dossier-card.closed { background: linear-gradient(160deg, #101b22 0%, #090f13 100%); border: 1.5px solid rgba(229, 184, 105, 0.4); box-shadow: 0 12px 35px rgba(0,0,0,0.6); }
+  .dossier-card.opened { background: var(--paper); color: var(--paper-text); border: 2px solid #d8ccb0; box-shadow: 0 12px 35px rgba(0,0,0,0.6); }
+  .dossier-badge { border: 1px solid rgba(229, 184, 105, 0.4); color: var(--gold); font-size: 11px; letter-spacing: 2.5px; padding: 4px 12px; border-radius: 6px; font-weight: 700; }
+  .top-secret-stamp { border: 3px solid #d94343; color: #d94343; font-size: 24px; font-weight: 900; letter-spacing: 3px; padding: 8px 18px; border-radius: 8px; transform: rotate(-12deg); }
+  .card-player-name { font-size: 22px; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+  .card-tap-hint { font-size: 12px; letter-spacing: 1.2px; color: var(--text-muted); text-transform: uppercase; }
+  .dossier-card.opened .card-tap-hint { color: #7c7262; }
+  .secret-word-label { font-size: 11px; letter-spacing: 2px; color: #7c7262; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+  .secret-word-value { font-size: 30px; font-weight: 900; color: #171410; text-transform: uppercase; word-break: break-word; }
+  .spy-role-title { font-size: 34px; font-weight: 900; color: #c93434; letter-spacing: 2px; margin-bottom: 8px; }
+  .spy-role-desc { font-size: 14px; color: #4f483e; max-width: 240px; line-height: 1.4; }
+  .interrogation-box { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 24px; margin-bottom: 18px; }
+  .traitor-header { text-align: center; margin-bottom: 14px; }
+  .traitor-sub { font-size: 11px; letter-spacing: 2px; color: var(--text-muted); font-weight: 700; }
+  .traitor-name { font-size: 28px; font-weight: 900; color: var(--red); text-transform: uppercase; }
+  .letter-search-box { margin-bottom: 12px; }
+  .letter-search-box label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+  .letter-search-box input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 14px; color: var(--text-main); font-size: 15px; outline: none; user-select: text; }
+  .guess-words-scroll { max-height: 210px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .guess-word-card { background: var(--paper); color: var(--paper-text); border: none; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+  .guess-word-card span { color: #8c806c; font-weight: 600; margin-right: 4px; }
+  .hints-panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; margin-bottom: 14px; }
+  .hints-title { font-size: 11px; letter-spacing: 1.5px; color: var(--gold); text-align: center; font-weight: 700; margin-bottom: 10px; }
+  .hints-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .hint-btn { background: var(--bg-card-2); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .hint-btn.used { border-color: var(--gold); color: var(--gold); background: rgba(229, 184, 105, 0.12); }
+  .hint-btn:disabled:not(.used) { opacity: 0.35; cursor: not-allowed; }
+  .hint-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; justify-content: center; }
+  .hint-chip { background: #1b2831; border: 1px solid rgba(229, 184, 105, 0.4); color: var(--text-main); padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
+  .vote-candidate { background: var(--bg-card-2); border: 1.5px solid var(--border-subtle); color: var(--text-main); padding: 16px 12px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .vote-candidate.selected { border-color: var(--gold); background: rgba(229, 184, 105, 0.14); color: var(--gold); }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(4, 7, 10, 0.85); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 18px; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { width: 100%; max-width: 440px; max-height: 88dvh; background: #0d151a; border: 1px solid rgba(229, 184, 105, 0.3); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .modal-title { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+  .modal-scroll { overflow-y: auto; flex: 1; padding-right: 4px; }
+  .setting-group { margin-bottom: 16px; }
+  .setting-label { font-size: 11px; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+  .toggle-full-btn { width: 100%; padding: 14px; border-radius: 12px; background: var(--bg-card-2); border: 1px solid var(--border-subtle); color: var(--text-main); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .db-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .db-select { width: 100%; background: var(--bg-card-2); border: 1px solid var(--border-subtle); color: var(--text-main); padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; outline: none; }
+  .db-words-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .db-word-item { background: var(--bg-card-2); border: 1px solid var(--border-subtle); padding: 10px 12px; border-radius: 10px; font-size: 13px; color: var(--text-main); }
+  .slider-row { margin-bottom: 14px; }
+  .slider-top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .slider-top span:last-child { color: var(--gold); }
+  input[type="range"] { width: 100%; accent-color: var(--gold); }
+  .result-card { text-align: center; padding: 28px 20px; }
+  .result-card.win { box-shadow: inset 0 0 40px rgba(56, 184, 124, 0.15); border-color: rgba(56, 184, 124, 0.5); }
+  .result-card.lose { box-shadow: inset 0 0 40px rgba(224, 82, 82, 0.15); border-color: rgba(224, 82, 82, 0.5); }
+  .result-title { font-size: 26px; font-weight: 900; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; }
+  .result-text { font-size: 15px; color: #d0d7de; line-height: 1.5; margin-bottom: 22px; }
+  .score-rule-box { background: rgba(229, 184, 105, 0.06); border: 1px solid rgba(229, 184, 105, 0.35); border-radius: 12px; padding: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-bottom: 14px; }
+  .score-rule-box strong { color: var(--gold); display: block; margin-bottom: 4px; letter-spacing: 1px; }
+  .score-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card-2); padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; font-weight: 700; }
+  .score-item span:last-child { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="app-container">
+    <div id="screen-home" class="screen active">
+    <div class="top-bar">
+      <div class="brand-label">Бюро тайных дел</div>
+      <div class="top-actions">
+        <button class="pill-btn" onclick="openModal('modal-db')">Базы слов</button>
+        <button class="circle-btn" onclick="openModal('modal-settings')" title="Настройки">⚙️</button>
+      </div>
+    </div>
+    <div class="hero-section">
+      <h1 class="main-title">Кто шпион?</h1>
+      <div class="main-subtitle">Секретный агент среди нас</div>
+      <div class="spy-emblem">
+        <svg viewBox="0 0 100 100">
+          <path d="M50 14c-14 0-24 6-26 14l-12 3c-2 .5-2 3 0 3.5l14 2.5c3 9 12 15 24 15s21-6 24-15l14-2.5c2-.5 2-3 0-3.5l-12-3c-2-8-12-14-26-14zm-13 24c4 0 7 2 8 5-3 1-6 1-8 1s-5 0-8-1c1-3 4-5 8-5zm26 0c4 0 7 2 8 5-3 1-6 1-8 1s-5 0-8-1c1-3 4-5 8-5zM24 58c-8 4-14 14-14 28h80c0-14-6-24-14-28-7 5-16 8-26 8s-19-3-26-8z"/>
+        </svg>
+      </div>
+      <div class="stamp-secret">Совершенно секретно</div>
+      <p class="hero-tagline">Все знают секрет. Кроме одного из вас.</p>
+      <button class="btn-gold" onclick="goScreen('screen-players')">ИГРАТЬ ▶</button>
+    </div>
+    <div class="footer-note">Один телефон · Много секретов</div>
+  </div>
+
+  <div id="screen-players" class="screen">
+    <div class="top-bar">
+      <button class="pill-btn" onclick="goScreen('screen-home')">&lt; Назад</button>
+      <div class="step-indicator"><span>01 / 02</span> · УЧАСТНИКИ</div>
+    </div>
+    <h2 class="page-heading">Соберите команду</h2>
+    <p class="page-sub">Кто сегодня за столом? Выберите состав и впишите имена.</p>
+    <div class="counter-card">
+      <div class="counter-label">Количество игроков</div>
+      <div class="counter-controls">
+        <button class="counter-btn" onclick="changePlayerCount(-1)">−</button>
+        <div class="counter-value" id="player-count-display">4</div>
+        <button class="counter-btn" onclick="changePlayerCount(1)">+</button>
+      </div>
+      <div class="counter-hint">4–12 игроков</div>
+    </div>
+    <div class="players-list" id="players-inputs-list"></div>
+    <div class="bottom-row">
+      <button class="btn-dark" onclick="resetPlayerNames()">Сбросить</button>
+      <button class="btn-gold" style="flex:1" onclick="proceedToModes()">ВЫБРАТЬ РЕЖИМ →</button>
+    </div>
+  </div>
+
+  <div id="screen-modes" class="screen">
+    <div class="top-bar">
+      <button class="pill-btn" onclick="goScreen('screen-players')">&lt; Участники</button>
+      <button class="circle-btn gold-ring" onclick="openScoreModal()">Счёт</button>
+      <div class="step-indicator">ВЫБОР РЕЖИМА</div>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn" id="mode-btn-locations" onclick="selectGameMode('locations')">Локации</button>
+      <button class="mode-btn active" id="mode-btn-classic" onclick="selectGameMode('classic')">Классика</button>
+    </div>
+    <div id="classic-settings-area">
+      <div class="diff-switch">
+        <button class="diff-btn active" data-diff="easy" onclick="selectDifficulty('easy')">Лёгкие</button>
+        <button class="diff-btn" data-diff="medium" onclick="selectDifficulty('medium')">Средние</button>
+        <button class="diff-btn" data-diff="hard" onclick="selectDifficulty('hard')">Хардкорные</button>
+      </div>
+      <div class="cat-grid theme-easy" id="category-grid">
+        <button class="cat-btn active" data-cat="food" onclick="selectCategory('food')">Еда</button>
+        <button class="cat-btn" data-cat="animals" onclick="selectCategory('animals')">Животные</button>
+        <button class="cat-btn" data-cat="plants" onclick="selectCategory('plants')">Растения</button>
+        <button class="cat-btn" data-cat="professions" onclick="selectCategory('professions')">Профессии</button>
+        <button class="cat-btn" data-cat="items" onclick="selectCategory('items')">Предметы</button>
+        <button class="cat-btn" data-cat="diseases" onclick="selectCategory('diseases')">Болезни</button>
+        <button class="cat-btn" data-cat="mixed" onclick="openMixedModal()" style="grid-column: span 2;">Смешанные ⚙️</button>
+      </div>
+    </div>
+    <div id="locations-settings-area" style="display:none;">
+      <div class="locations-info-box">
+        <strong>Режим «Локации» (27 мест)</strong><br><br>
+        Мирные игроки получают название одного и того же места (например: Аэропорт, Подводная лодка, Казино). Шпион не знает локацию и должен вычислить её по вопросам.
+      </div>
+    </div>
+    <div style="margin-top:auto;">
+      <button class="btn-gold" onclick="startRound()">РАЗДАТЬ РОЛИ</button>
+    </div>
+  </div>
+
+  <div id="screen-deal" class="screen">
+    <div class="top-bar">
+      <div class="brand-label" id="deal-progress">ИГРОК 1 (1 ИЗ 4)</div>
+      <div class="top-actions">
+        <button class="pill-btn" onclick="openRoundWordsModal()">Список</button>
+        <button class="pill-btn" onclick="confirmAbortRound()">Сброс</button>
+      </div>
+    </div>
+    <div class="dossier-card closed" id="dossier-card" onclick="toggleDossierCard()">
+      <div class="dossier-badge" id="card-top-badge">ДОСЬЕ</div>
+      <div id="card-closed-body"><div class="top-secret-stamp">TOP SECRET</div></div>
+      <div id="card-opened-body" style="display:none;"></div>
+      <div>
+        <div class="card-player-name" id="card-player-name">ИГРОК 1</div>
+        <div class="card-tap-hint" id="card-tap-hint">НАЖМИ, ЧТОБЫ ОТКРЫТЬ</div>
+      </div>
+    </div>
+    <button class="btn-gold" id="deal-next-btn" disabled onclick="nextDealPlayer()">СНАЧАЛА ОТКРОЙТЕ КАРТУ</button>
+      </div>
+        <div id="screen-discuss" class="screen">
+    <div class="top-bar">
+      <div class="brand-label">СТАДИЯ ДОПРОСА</div>
+      <div class="top-actions">
+        <button class="pill-btn" onclick="openRoundWordsModal()">Список</button>
+        <button class="pill-btn" onclick="goScreen('screen-modes')">В меню</button>
+      </div>
+    </div>
+    <div class="interrogation-box">
+      <div class="spy-emblem" style="width:120px;height:120px;margin-bottom:18px;">
+        <svg viewBox="0 0 100 100" style="width:72px;height:72px;">
+          <path d="M50 14c-14 0-24 6-26 14l-12 3c-2 .5-2 3 0 3.5l14 2.5c3 9 12 15 24 15s21-6 24-15l14-2.5c2-.5 2-3 0-3.5l-12-3c-2-8-12-14-26-14zm-13 24c4 0 7 2 8 5-3 1-6 1-8 1s-5 0-8-1c1-3 4-5 8-5zm26 0c4 0 7 2 8 5-3 1-6 1-8 1s-5 0-8-1c1-3 4-5 8-5zM24 58c-8 4-14 14-14 28h80c0-14-6-24-14-28-7 5-16 8-26 8s-19-3-26-8z"/>
+        </svg>
+      </div>
+      <h2 class="page-heading" style="text-transform:uppercase;">Все роли выданы!</h2>
+      <p class="page-sub" style="margin-bottom:0;max-width:290px;">Задавайте друг другу вопросы по очереди. Не раскрывайте секрет напрямую! Когда будете готовы — вскрывайте досье.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-gold" id="btn-start-vote" onclick="startSecretVote()">ТАЙНОЕ ГОЛОСОВАНИЕ</button>
+      <button class="btn-secondary" id="btn-spy-guess" onclick="openSpyGuessScreen()">ШПИОН ГОВОРИТ СЛОВО</button>
+    </div>
+  </div>
+
+  <div id="screen-vote" class="screen">
+    <div class="top-bar">
+      <div class="brand-label" id="vote-progress">ГОЛОС: 1 ИЗ 4</div>
+      <button class="pill-btn" onclick="goScreen('screen-discuss')">Отмена</button>
+    </div>
+    <div class="interrogation-box" style="justify-content:flex-start;padding-top:28px;">
+      <h2 class="page-heading" id="voter-title">ИГРОК 1, ВАШ ГОЛОС</h2>
+      <p class="page-sub">Выберите, кого вы считаете шпионом. Голос тайный!</p>
+      <div class="vote-grid" id="vote-candidates-grid" style="width:100%;"></div>
+    </div>
+    <button class="btn-gold" id="vote-confirm-btn" disabled onclick="submitSingleVote()">ВЫБЕРИТЕ ПОДОЗРЕВАЕМОГО</button>
+  </div>
+
+  <div id="screen-reveal" class="screen">
+    <div class="top-bar">
+      <div class="brand-label" style="color:var(--red);">ДЕЛО РАСКРЫТО</div>
+      <button class="circle-btn gold-ring" onclick="openScoreModal()">Счёт</button>
+    </div>
+    <div class="traitor-header">
+      <div class="traitor-sub">ПРЕДАТЕЛЬ</div>
+      <div class="traitor-name" id="reveal-spy-name">ИГРОК 4</div>
+    </div>
+    <div id="spy-guess-section">
+      <div class="letter-search-box">
+        <label id="guess-prompt-label">ВЫБЕРИТЕ СЛОВО · Переход по первой букве</label>
+        <input type="text" id="letter-jump-input" maxlength="1" placeholder="Введите букву, например М" oninput="jumpToLetter(this.value)">
+      </div>
+      <div class="guess-words-scroll" id="guess-words-list"></div>
+      <div class="hints-panel">
+        <div class="hints-title">ПОДСКАЗКА ДЛЯ ШПИОНА</div>
+        <div class="hints-buttons">
+          <button class="hint-btn" id="hint-half" onclick="useSpyHint('half')">Половина</button>
+          <button class="hint-btn" id="hint-5" onclick="useSpyHint('5')">5 слов</button>
+          <button class="hint-btn" id="hint-3" onclick="useSpyHint('3')">3 слова</button>
+        </div>
+        <div class="hint-chips" id="hint-chips-area"></div>
+      </div>
+    </div>
+    <div id="final-secret-card" style="display:none;flex:1;align-items:center;justify-content:center;margin-bottom:18px;">
+      <div class="dossier-card opened" style="width:100%;max-height:210px;justify-content:center;cursor:default;">
+        <div class="secret-word-label" id="final-secret-label">ЗАГАДАННОЕ СЛОВО</div>
+        <div class="secret-word-value" id="final-secret-value">УБОРЩИК</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto;">
+      <button class="btn-gold" onclick="startRound()">ИГРАТЬ СНОВА</button>
+      <button class="btn-dark" style="width:100%;" onclick="goScreen('screen-modes')">Выбор режима</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-db">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Базы слов</div><button class="circle-btn" onclick="closeModal('modal-db')">✕</button></div>
+    <div class="db-selectors">
+      <select class="db-select" id="db-diff-select" onchange="renderDbWords()"><option value="easy">Лёгкие</option><option value="medium">Средние</option><option value="hard">Хардкорные</option></select>
+      <select class="db-select" id="db-cat-select" onchange="renderDbWords()"><option value="food">Еда</option><option value="animals">Животные</option><option value="plants">Растения</option><option value="professions">Профессии</option><option value="items">Предметы</option><option value="diseases">Болезни</option><option value="mixed">Смешанные</option><option value="locations">Локации</option></select>
+    </div>
+    <div id="db-info-line" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;"></div>
+    <div class="modal-scroll"><div class="db-words-grid" id="db-words-container"></div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Настройки</div><button class="circle-btn" onclick="closeModal('modal-settings')">✕</button></div>
+    <div class="setting-group"><div class="setting-label">Звук игры</div><button class="toggle-full-btn" id="setting-sound-btn" onclick="toggleSoundSetting()">Звук: Вкл</button></div>
+    <div class="setting-group"><div class="setting-label">Режим голосования</div><button class="toggle-full-btn" id="setting-vote-btn" onclick="toggleVoteSetting()">Голосование: Вкл</button></div>
+    <div class="setting-group">
+      <div class="setting-label">Игра до баллов</div>
+      <div class="counter-card" style="margin-bottom:0;">
+        <div class="counter-controls"><button class="counter-btn" onclick="changeTargetScore(-6)">−6</button><div class="counter-value" id="target-score-display">0</div><button class="counter-btn" onclick="changeTargetScore(6)">+6</button></div>
+        <div class="counter-hint">0 = БЕЗ ЛИМИТА</div>
+      </div>
+    </div>
+    <button class="btn-dark" style="width:100%;color:var(--red);border-color:rgba(224,82,82,0.35);" onclick="resetAllScores()">Сбросить счёт всех игроков</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-mixed">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title" id="mixed-modal-title">СМЕШАННЫЕ: ЛЁГКИЕ</div><button class="circle-btn" onclick="closeModal('modal-mixed')">✕</button></div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Настройте ползунками количество слов из каждой категории:</p>
+    <div class="modal-scroll" id="mixed-sliders-container"></div>
+    <div class="bottom-row" style="margin-top:12px;"><button class="btn-dark" onclick="randomizeMixedSliders()">РАНДОМ</button><button class="btn-gold" style="flex:1;" onclick="saveMixedSelection()">СОХРАНИТЬ</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-score">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Текущий счёт</div><button class="circle-btn" onclick="closeModal('modal-score')">✕</button></div>
+    <div id="score-target-subtitle" style="font-size:13px;color:var(--gold);margin-bottom:12px;font-weight:700;">Цель игры: Без лимита</div>
+    <div class="score-rule-box"><strong>КОГДА НАЧИСЛЯЮТСЯ БАЛЛЫ</strong>Угадал без подсказки: Шпион +6 (ошибка: мирным +1).<br>Половина: Шпион +3 (ошибка: мирным +2).<br>5 слов: Шпион +1 (ошибка: мирным +4).<br>3 слова: Шпион +0 (ошибка: мирным +6).<br>Голосование: выгнали шпиона — мирным +1; выгнали мирного — шпиону +6.</div>
+    <div class="modal-scroll" id="score-list-container"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-result">
+  <div class="modal-box result-card" id="result-modal-box">
+    <div class="result-title" id="result-modal-title">ПОБЕДА ШПИОНА!</div>
+    <div class="result-text" id="result-modal-text">Текст результата</div>
+    <button class="btn-gold" onclick="closeResultModal()">ПРОДОЛЖИТЬ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-round-words">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Варианты раунда</div><button class="circle-btn" onclick="closeModal('modal-round-words')">✕</button></div>
+    <div class="modal-scroll"><div class="db-words-grid" id="round-words-grid"></div></div>
+  </div>
+</div>
+<script>
 const AudioEngine = {
-ctx: null,
-init() {
-if (!this.ctx) {
-this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-}
-},
-play(type) {
-if (!state.settings.sound) return;
-try {
-this.init();
-const osc = this.ctx.createOscillator();
-const gain = this.ctx.createGain();
-osc.connect(gain);
-gain.connect(this.ctx.destination);
-const now = this.ctx.currentTime;
-if (type === 'click') {
-osc.type = 'sine';
-osc.frequency.setValueAtTime(520, now);
-osc.frequency.exponentialRampToValueAtTime(280, now + 0.06);
-gain.gain.setValueAtTime(0.08, now);
-gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-osc.start(now);
-osc.stop(now + 0.06);
-} else if (type === 'flip') {
-osc.type = 'triangle';
-osc.frequency.setValueAtTime(300, now);
-osc.frequency.exponentialRampToValueAtTime(620, now + 0.12);
-gain.gain.setValueAtTime(0.1, now);
-gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-osc.start(now);
-osc.stop(now + 0.12);
-} else if (type === 'win') {
-osc.type = 'triangle';
-osc.frequency.setValueAtTime(440, now);
-osc.frequency.setValueAtTime(554, now + 0.1);
-osc.frequency.setValueAtTime(659, now + 0.2);
-gain.gain.setValueAtTime(0.12, now);
-gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-osc.start(now);
-osc.stop(now + 0.4);
-} else if (type === 'lose') {
-osc.type = 'sawtooth';
-osc.frequency.setValueAtTime(240, now);
-osc.frequency.linearRampToValueAtTime(140, now + 0.35);
-gain.gain.setValueAtTime(0.1, now);
-gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-osc.start(now);
-osc.stop(now + 0.35);
-}
-} catch (e) {}
-}
+  ctx: null,
+  init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  play(type) {
+    if (!state.settings.sound) return;
+    try {
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      const now = this.ctx.currentTime;
+      if (type === 'click') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(520, now); osc.frequency.exponentialRampToValueAtTime(280, now + 0.06);
+        gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.start(now); osc.stop(now + 0.06);
+      } else if (type === 'flip') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(620, now + 0.12);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now); osc.stop(now + 0.12);
+      } else if (type === 'win') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554, now + 0.1); osc.frequency.setValueAtTime(659, now + 0.2);
+        gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+      } else if (type === 'lose') {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(240, now); osc.frequency.linearRampToValueAtTime(140, now + 0.35);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now); osc.stop(now + 0.35);
+      }
+    } catch (e) {}
+  }
 };
+
 const state = {
-settings: {
-sound: true,
-voting: true,
-targetScore: 0
-},
-playerCount: 4,
-players: [
-{ name: "Игрок 1", score: 0 },
-{ name: "Игрок 2", score: 0 },
-{ name: "Игрок 3", score: 0 },
-{ name: "Игрок 4", score: 0 }
-],
-mode: 'classic',
-difficulty: 'easy',
-category: 'food',
-mixedCounts: {
-easy: { food: 15, animals: 15, plants: 15, professions: 15, items: 15, diseases: 15 },
-medium: { food: 8, animals: 8, plants: 8, professions: 8, items: 8, diseases: 8 },
-hard: { food: 3, animals: 3, plants: 3, professions: 3, items: 3, diseases: 3 }
-},
-round: {
-pool: [],
-secret: "",
-spyIndex: 0,
-dealIndex: 0,
-cardOpened: false,
-usedHint: null,
-pointsAwarded: false,
-afterResultAction: null
-},
-voting: {
-voterIndex: 0,
-selectedCandidate: null,
-votes: {}
-}
+  settings: { sound: true, voting: true, targetScore: 0 },
+  playerCount: 4,
+  players: [
+    { name: "Игрок 1", score: 0 }, { name: "Игрок 2", score: 0 },
+    { name: "Игрок 3", score: 0 }, { name: "Игрок 4", score: 0 }
+  ],
+  mode: 'classic', difficulty: 'easy', category: 'food',
+  mixedCounts: {
+    easy: { food: 15, animals: 15, plants: 15, professions: 15, items: 15, diseases: 15 },
+    medium: { food: 8, animals: 8, plants: 8, professions: 8, items: 8, diseases: 8 },
+    hard: { food: 3, animals: 3, plants: 3, professions: 3, items: 3, diseases: 3 }
+  },
+  round: { pool: [], secret: "", spyIndex: 0, dealIndex: 0, cardOpened: false, usedHint: null, pointsAwarded: false, afterResultAction: null },
+  voting: { voterIndex: 0, selectedCandidate: null, votes: {} }
 };
+
 function goScreen(id) {
-AudioEngine.play('click');
-document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-document.getElementById(id).classList.add('active');
-if (id === 'screen-players') renderPlayerInputs();
+  AudioEngine.play('click');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-players') renderPlayerInputs();
 }
-function openModal(id) {
-AudioEngine.play('click');
-document.getElementById(id).classList.add('active');
-if (id === 'modal-db') renderDbWords();
-}
-function closeModal(id) {
-AudioEngine.play('click');
-document.getElementById(id).classList.remove('active');
-}
-function toggleSoundSetting() {
-state.settings.sound = !state.settings.sound;
-document.getElementById('setting-sound-btn').textContent = Звук: ${state.settings.sound ? 'Вкл' : 'Выкл'};
-AudioEngine.play('click');
-}
-function toggleVoteSetting() {
-AudioEngine.play('click');
-state.settings.voting = !state.settings.voting;
-document.getElementById('setting-vote-btn').textContent = Голосование: ${state.settings.voting ? 'Вкл' : 'Выкл'};
-}
-function changeTargetScore(delta) {
-AudioEngine.play('click');
-state.settings.targetScore = Math.max(0, state.settings.targetScore + delta);
-document.getElementById('target-score-display').textContent = state.settings.targetScore;
-}
-function resetAllScores() {
-AudioEngine.play('click');
-state.players.forEach(p => p.score = 0);
-alert('Счёт всех игроков сброшен до 0.');
-}
+function openModal(id) { AudioEngine.play('click'); document.getElementById(id).classList.add('active'); if (id === 'modal-db') renderDbWords(); }
+function closeModal(id) { AudioEngine.play('click'); document.getElementById(id).classList.remove('active'); }
+
+function toggleSoundSetting() { state.settings.sound = !state.settings.sound; document.getElementById('setting-sound-btn').textContent = `Звук: ${state.settings.sound ? 'Вкл' : 'Выкл'}`; AudioEngine.play('click'); }
+function toggleVoteSetting() { AudioEngine.play('click'); state.settings.voting = !state.settings.voting; document.getElementById('setting-vote-btn').textContent = `Голосование: ${state.settings.voting ? 'Вкл' : 'Выкл'}`; }
+function changeTargetScore(delta) { AudioEngine.play('click'); state.settings.targetScore = Math.max(0, state.settings.targetScore + delta); document.getElementById('target-score-display').textContent = state.settings.targetScore; }
+function resetAllScores() { AudioEngine.play('click'); state.players.forEach(p => p.score = 0); alert('Счёт всех игроков сброшен до 0.'); }
+
 function changePlayerCount(delta) {
-AudioEngine.play('click');
-const next = state.playerCount + delta;
-if (next < 4 || next > 12) return;
-state.playerCount = next;
-while (state.players.length < state.playerCount) {
-state.players.push({ name: Игрок ${state.players.length + 1}, score: 0 });
-}
-document.getElementById('player-count-display').textContent = state.playerCount;
-renderPlayerInputs();
+  AudioEngine.play('click');
+  const next = state.playerCount + delta;
+  if (next < 4 || next > 12) return;
+  state.playerCount = next;
+  while (state.players.length < state.playerCount) state.players.push({ name: `Игрок ${state.players.length + 1}`, score: 0 });
+  document.getElementById('player-count-display').textContent = state.playerCount;
+  renderPlayerInputs();
 }
 function renderPlayerInputs() {
-const list = document.getElementById('players-inputs-list');
-list.innerHTML = '';
-for (let i = 0; i < state.playerCount; i++) {
-const row = document.createElement('div');
-row.className = 'player-row';
-const currentVal = state.players[i].name === Игрок ${i + 1} ? '' : state.players[i].name;
-row.innerHTML = <label>Игрок ${i + 1}:</label><input type="text" placeholder="Имя игрока ${i + 1}" value="${currentVal}" oninput="updatePlayerName(${i}, this.value)">;
-list.appendChild(row);
+  const list = document.getElementById('players-inputs-list'); list.innerHTML = '';
+  for (let i = 0; i < state.playerCount; i++) {
+    const row = document.createElement('div'); row.className = 'player-row';
+    const currentVal = state.players[i].name === `Игрок ${i + 1}` ? '' : state.players[i].name;
+    row.innerHTML = `<label>Игрок ${i + 1}:</label><input type="text" placeholder="Имя игрока ${i + 1}" value="${currentVal}" oninput="updatePlayerName(${i}, this.value)">`;
+    list.appendChild(row);
+  }
 }
-}
-function updatePlayerName(idx, val) {
-const trimmed = val.trim();
-state.players[idx].name = trimmed ? trimmed : Игрок ${idx + 1};
-}
-function resetPlayerNames() {
-AudioEngine.play('click');
-for (let i = 0; i < state.players.length; i++) {
-state.players[i].name = Игрок ${i + 1};
-}
-renderPlayerInputs();
-}
-function proceedToModes() {
-goScreen('screen-modes');
-}
+function updatePlayerName(idx, val) { const trimmed = val.trim(); state.players[idx].name = trimmed ? trimmed : `Игрок ${idx + 1}`; }
+function resetPlayerNames() { AudioEngine.play('click'); for (let i = 0; i < state.players.length; i++) state.players[i].name = `Игрок ${i + 1}`; renderPlayerInputs(); }
+function proceedToModes() { goScreen('screen-modes'); }
+
 function selectGameMode(mode) {
-AudioEngine.play('click');
-state.mode = mode;
-document.getElementById('mode-btn-locations').classList.toggle('active', mode === 'locations');
-document.getElementById('mode-btn-classic').classList.toggle('active', mode === 'classic');
-document.getElementById('classic-settings-area').style.display = mode === 'classic' ? 'block' : 'none';
-document.getElementById('locations-settings-area').style.display = mode === 'locations' ? 'block' : 'none';
+  AudioEngine.play('click'); state.mode = mode;
+  document.getElementById('mode-btn-locations').classList.toggle('active', mode === 'locations');
+  document.getElementById('mode-btn-classic').classList.toggle('active', mode === 'classic');
+  document.getElementById('classic-settings-area').style.display = mode === 'classic' ? 'block' : 'none';
+  document.getElementById('locations-settings-area').style.display = mode === 'locations' ? 'block' : 'none';
 }
 function selectDifficulty(diff) {
-AudioEngine.play('click');
-state.difficulty = diff;
-document.querySelectorAll('.diff-btn').forEach(b => {
-b.classList.toggle('active', b.dataset.diff === diff);
-});
-const grid = document.getElementById('category-grid');
-grid.className = cat-grid theme-${diff};
+  AudioEngine.play('click'); state.difficulty = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === diff));
+  document.getElementById('category-grid').className = `cat-grid theme-${diff}`;
 }
 function selectCategory(cat) {
-AudioEngine.play('click');
-state.category = cat;
-document.querySelectorAll('.cat-btn').forEach(b => {
-b.classList.toggle('active', b.dataset.cat === cat);
-});
-}
-function openMixedModal() {
-selectCategory('mixed');
-const diffNames = { easy: 'ЛЁГКИЕ', medium: 'СРЕДНИЕ', hard: 'ХАРДКОРНЫЕ' };
-const maxByDiff = { easy: 100, medium: 50, hard: 10 };
-const maxVal = maxByDiff[state.difficulty];
-document.getElementById('mixed-modal-title').textContent = СМЕШАННЫЕ: ${diffNames[state.difficulty]};
-const container = document.getElementById('mixed-sliders-container');
-container.innerHTML = '';
-const cats = Object.keys(window.SPY_WORDS_DB.categories);
-cats.forEach(cKey => {
-const cObj = window.SPY_WORDS_DB.categories[cKey];
-const current = state.mixedCounts[state.difficulty][cKey];
-const row = document.createElement('div');
-row.className = 'slider-row';
-row.innerHTML = <div class="slider-top"><span>${cObj.name}</span><span id="slider-val-${cKey}">${current} / ${maxVal}</span></div><input type="range" min="0" max="${maxVal}" value="${current}" id="slider-inp-${cKey}" oninput="updateMixedSlider('${cKey}', this.value, ${maxVal})">;
-container.appendChild(row);
-});
-openModal('modal-mixed');
-}
-function updateMixedSlider(cKey, val, maxVal) {
-state.mixedCounts[state.difficulty][cKey] = parseInt(val, 10);
-document.getElementById(slider-val-${cKey}).textContent = ${val} / ${maxVal};
-}
-function randomizeMixedSliders() {
-AudioEngine.play('click');
-const maxByDiff = { easy: 100, medium: 50, hard: 10 };
-const maxVal = maxByDiff[state.difficulty];
-const cats = Object.keys(window.SPY_WORDS_DB.categories);
-cats.forEach(cKey => {
-const rnd = Math.floor(Math.random() * (maxVal + 1));
-state.mixedCounts[state.difficulty][cKey] = rnd;
-document.getElementById(slider-inp-${cKey}).value = rnd;
-document.getElementById(slider-val-${cKey}).textContent = ${rnd} / ${maxVal};
-});
-}
-function saveMixedSelection() {
-const counts = state.mixedCounts[state.difficulty];
-const total = Object.values(counts).reduce((a, b) => a + b, 0);
-if (total === 0) {
-alert('Выберите хотя бы 1 слово в любой из категорий!');
-return;
-}
-closeModal('modal-mixed');
-}
-function renderDbWords() {
-const diff = document.getElementById('db-diff-select').value;
-const cat = document.getElementById('db-cat-select').value;
-const diffEl = document.getElementById('db-diff-select');
-const info = document.getElementById('db-info-line');
-const grid = document.getElementById('db-words-container');
-let words = [];
-if (cat === 'locations') {
-diffEl.disabled = true;
-words = [...window.SPY_WORDS_DB.locations].sort((a, b) => a.localeCompare(b, 'ru'));
-info.textContent = ${words.length} локаций · По алфавиту;
-} else if (cat === 'mixed') {
-diffEl.disabled = false;
-const cats = Object.keys(window.SPY_WORDS_DB.categories);
-cats.forEach(k => words.push(...window.SPY_WORDS_DB.categories[k][diff]));
-words = Array.from(new Set(words)).sort((a, b) => a.localeCompare(b, 'ru'));
-info.textContent = ${words.length} слов · Все слова выбранной сложности. В игре подборка набирается случайно по настройкам категорий;
-} else {
-diffEl.disabled = false;
-words = [...window.SPY_WORDS_DB.categories[cat][diff]].sort((a, b) => a.localeCompare(b, 'ru'));
-info.textContent = ${words.length} слов · По алфавиту;
-}
-  grid.innerHTML = words.map((w, idx) => `<div class="db-word-item">${idx + 1}. ${w}</div>`).join('');
+  AudioEngine.play('click'); state.category = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
 }
 
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+function openMixedModal() {
+  selectCategory('mixed');
+  const diffNames = { easy: 'ЛЁГКИЕ', medium: 'СРЕДНИЕ', hard: 'ХАРДКОРНЫЕ' };
+  const maxByDiff = { easy: 100, medium: 50, hard: 10 };
+  const maxVal = maxByDiff[state.difficulty];
+  document.getElementById('mixed-modal-title').textContent = `СМЕШАННЫЕ: ${diffNames[state.difficulty]}`;
+  const container = document.getElementById('mixed-sliders-container'); container.innerHTML = '';
+  Object.keys(window.SPY_WORDS_DB.categories).forEach(cKey => {
+    const cObj = window.SPY_WORDS_DB.categories[cKey];
+    const current = state.mixedCounts[state.difficulty][cKey];
+    const row = document.createElement('div'); row.className = 'slider-row';
+    row.innerHTML = `<div class="slider-top"><span>${cObj.name}</span><span id="slider-val-${cKey}">${current} / ${maxVal}</span></div><input type="range" min="0" max="${maxVal}" value="${current}" id="slider-inp-${cKey}" oninput="updateMixedSlider('${cKey}', this.value, ${maxVal})">`;
+    container.appendChild(row);
+  });
+  openModal('modal-mixed');
+}
+function updateMixedSlider(cKey, val, maxVal) { state.mixedCounts[state.difficulty][cKey] = parseInt(val, 10); document.getElementById(`slider-val-${cKey}`).textContent = `${val} / ${maxVal}`; }
+function randomizeMixedSliders() {
+  AudioEngine.play('click');
+  const maxByDiff = { easy: 100, medium: 50, hard: 10 }; const maxVal = maxByDiff[state.difficulty];
+  Object.keys(window.SPY_WORDS_DB.categories).forEach(cKey => {
+    const rnd = Math.floor(Math.random() * (maxVal + 1));
+    state.mixedCounts[state.difficulty][cKey] = rnd;
+    document.getElementById(`slider-inp-${cKey}`).value = rnd;
+    document.getElementById(`slider-val-${cKey}`).textContent = `${rnd} / ${maxVal}`;
+  });
+}
+function saveMixedSelection() {
+  const total = Object.values(state.mixedCounts[state.difficulty]).reduce((a, b) => a + b, 0);
+  if (total === 0) { alert('Выберите хотя бы 1 слово в любой из категорий!'); return; }
+  closeModal('modal-mixed');
+}
+function renderDbWords() {
+  const diff = document.getElementById('db-diff-select').value;
+  const cat = document.getElementById('db-cat-select').value;
+  const diffEl = document.getElementById('db-diff-select');
+  const info = document.getElementById('db-info-line');
+  const grid = document.getElementById('db-words-container');
+  let words = [];
+  if (cat === 'locations') {
+    diffEl.disabled = true; words = [...window.SPY_WORDS_DB.locations].sort((a, b) => a.localeCompare(b, 'ru'));
+    info.textContent = `${words.length} локаций · По алфавиту`;
+  } else if (cat === 'mixed') {
+    diffEl.disabled = false;
+    Object.keys(window.SPY_WORDS_DB.categories).forEach(k => words.push(...window.SPY_WORDS_DB.categories[k][diff]));
+    words = Array.from(new Set(words)).sort((a, b) => a.localeCompare(b, 'ru'));
+    info.textContent = `${words.length} слов · Все слова выбранной сложности. В игре подборка набирается случайно по настройкам категорий`;
+  } else {
+    diffEl.disabled = false; words = [...window.SPY_WORDS_DB.categories[cat][diff]].sort((a, b) => a.localeCompare(b, 'ru'));
+    info.textContent = `${words.length} слов · По алфавиту`;
   }
+  grid.innerHTML = words.map((w, idx) => `<div class="db-word-item">${idx + 1}. ${w}</div>`).join('');
+}
+  function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; }
   return copy;
 }
 
 function startRound() {
   AudioEngine.play('click');
   let pool = [];
-
   if (state.mode === 'locations') {
     pool = [...window.SPY_WORDS_DB.locations].sort((a, b) => a.localeCompare(b, 'ru'));
   } else if (state.category === 'mixed') {
     const counts = state.mixedCounts[state.difficulty];
-    const cats = Object.keys(window.SPY_WORDS_DB.categories);
-    cats.forEach(cKey => {
-      const count = counts[cKey];
-      if (count > 0) {
-        const source = shuffleArray(window.SPY_WORDS_DB.categories[cKey][state.difficulty]);
-        pool.push(...source.slice(0, count));
-      }
+    Object.keys(window.SPY_WORDS_DB.categories).forEach(cKey => {
+      if (counts[cKey] > 0) pool.push(...shuffleArray(window.SPY_WORDS_DB.categories[cKey][state.difficulty]).slice(0, counts[cKey]));
     });
-    if (pool.length === 0) {
-      pool = [...window.SPY_WORDS_DB.categories.food[state.difficulty]];
-    }
+    if (pool.length === 0) pool = [...window.SPY_WORDS_DB.categories.food[state.difficulty]];
     pool = Array.from(new Set(pool)).sort((a, b) => a.localeCompare(b, 'ru'));
   } else {
     pool = [...window.SPY_WORDS_DB.categories[state.category][state.difficulty]].sort((a, b) => a.localeCompare(b, 'ru'));
   }
-
   state.round.pool = pool;
   state.round.secret = pool[Math.floor(Math.random() * pool.length)];
   state.round.spyIndex = Math.floor(Math.random() * state.playerCount);
-  state.round.dealIndex = 0;
-  state.round.cardOpened = false;
-  state.round.usedHint = null;
-  state.round.pointsAwarded = false;
-
-  updateDealUI();
-  goScreen('screen-deal');
+  state.round.dealIndex = 0; state.round.cardOpened = false; state.round.usedHint = null; state.round.pointsAwarded = false;
+  updateDealUI(); goScreen('screen-deal');
 }
 
 function updateDealUI() {
@@ -1321,283 +575,155 @@ function updateDealUI() {
   const player = state.players[idx];
   const isSpy = idx === state.round.spyIndex;
   const isLoc = state.mode === 'locations';
-
   document.getElementById('deal-progress').textContent = `${player.name.toUpperCase()} (${idx + 1} ИЗ ${state.playerCount})`;
   document.getElementById('card-player-name').textContent = player.name.toUpperCase();
-
   const card = document.getElementById('dossier-card');
   const nextBtn = document.getElementById('deal-next-btn');
-
   if (!state.round.cardOpened) {
     card.className = 'dossier-card closed';
     document.getElementById('card-closed-body').style.display = 'block';
     document.getElementById('card-opened-body').style.display = 'none';
     document.getElementById('card-tap-hint').textContent = 'НАЖМИ, ЧТОБЫ ОТКРЫТЬ';
-    nextBtn.disabled = true;
-    nextBtn.textContent = 'СНАЧАЛА ОТКРОЙТЕ КАРТУ';
+    nextBtn.disabled = true; nextBtn.textContent = 'СНАЧАЛА ОТКРОЙТЕ КАРТУ';
   } else {
     card.className = 'dossier-card opened';
     document.getElementById('card-closed-body').style.display = 'none';
     document.getElementById('card-opened-body').style.display = 'block';
     document.getElementById('card-tap-hint').textContent = 'ТАПНИТЕ, ЧТОБЫ СКРЫТЬ';
-
     if (isSpy) {
-      document.getElementById('card-opened-body').innerHTML = `
-        <div class="spy-role-title">ШПИОН</div>
-        <div class="spy-role-desc">${isLoc ? 'Секретная локация неизвестна! Выведайте её у других.' : 'Секретное слово неизвестно! Выведайте его у других.'}</div>
-      `;
+      document.getElementById('card-opened-body').innerHTML = `<div class="spy-role-title">ШПИОН</div><div class="spy-role-desc">${isLoc ? 'Секретная локация неизвестна! Выведайте её у других.' : 'Секретное слово неизвестно! Выведайте его у других.'}</div>`;
     } else {
-      document.getElementById('card-opened-body').innerHTML = `
-        <div class="secret-word-label">${isLoc ? 'СЕКРЕТНАЯ ЛОКАЦИЯ' : 'СЕКРЕТНОЕ СЛОВО'}</div>
-        <div class="secret-word-value">${state.round.secret}</div>
-      `;
+      document.getElementById('card-opened-body').innerHTML = `<div class="secret-word-label">${isLoc ? 'СЕКРЕТНАЯ ЛОКАЦИЯ' : 'СЕКРЕТНОЕ СЛОВО'}</div><div class="secret-word-value">${state.round.secret}</div>`;
     }
-
     nextBtn.disabled = false;
     nextBtn.textContent = (idx === state.playerCount - 1) ? 'К ОБСУЖДЕНИЮ' : 'ПЕРЕДАТЬ ТЕЛЕФОН';
   }
 }
 
-function toggleDossierCard() {
-  AudioEngine.play('flip');
-  state.round.cardOpened = !state.round.cardOpened;
-  updateDealUI();
-}
-
+function toggleDossierCard() { AudioEngine.play('flip'); state.round.cardOpened = !state.round.cardOpened; updateDealUI(); }
 function nextDealPlayer() {
   AudioEngine.play('click');
-  if (state.round.dealIndex < state.playerCount - 1) {
-    state.round.dealIndex++;
-    state.round.cardOpened = false;
-    updateDealUI();
-  } else {
-    enterDiscussionScreen();
-  }
+  if (state.round.dealIndex < state.playerCount - 1) { state.round.dealIndex++; state.round.cardOpened = false; updateDealUI(); }
+  else enterDiscussionScreen();
 }
-
-function confirmAbortRound() {
-  if (confirm('Прервать текущий раунд и вернуться к выбору режима?')) {
-    goScreen('screen-modes');
-  }
-}
-
+function confirmAbortRound() { if (confirm('Прервать текущий раунд и вернуться к выбору режима?')) goScreen('screen-modes'); }
 function openRoundWordsModal() {
-  const grid = document.getElementById('round-words-grid');
-  grid.innerHTML = state.round.pool.map((w, idx) => `<div class="db-word-item">${idx + 1}. ${w}</div>`).join('');
+  document.getElementById('round-words-grid').innerHTML = state.round.pool.map((w, idx) => `<div class="db-word-item">${idx + 1}. ${w}</div>`).join('');
   openModal('modal-round-words');
 }
 
 function enterDiscussionScreen() {
   const isLoc = state.mode === 'locations';
-  const voteBtn = document.getElementById('btn-start-vote');
-  const guessBtn = document.getElementById('btn-spy-guess');
-
-  voteBtn.style.display = state.settings.voting ? 'block' : 'none';
-  guessBtn.textContent = isLoc ? 'ШПИОН НАЗЫВАЕТ ЛОКАЦИЮ' : 'ШПИОН ГОВОРИТ СЛОВО';
+  document.getElementById('btn-start-vote').style.display = state.settings.voting ? 'block' : 'none';
+  document.getElementById('btn-spy-guess').textContent = isLoc ? 'ШПИОН НАЗЫВАЕТ ЛОКАЦИЮ' : 'ШПИОН ГОВОРИТ СЛОВО';
   goScreen('screen-discuss');
 }
 
-function startSecretVote() {
-  state.voting.voterIndex = 0;
-  state.voting.selectedCandidate = null;
-  state.voting.votes = {};
-  updateVoteUI();
-  goScreen('screen-vote');
-}
-
+function startSecretVote() { state.voting.voterIndex = 0; state.voting.selectedCandidate = null; state.voting.votes = {}; updateVoteUI(); goScreen('screen-vote'); }
 function updateVoteUI() {
   const vIdx = state.voting.voterIndex;
   const voter = state.players[vIdx];
   document.getElementById('vote-progress').textContent = `ГОЛОС: ${vIdx + 1} ИЗ ${state.playerCount}`;
   document.getElementById('voter-title').textContent = `${voter.name.toUpperCase()}, ВАШ ГОЛОС`;
-
-  const grid = document.getElementById('vote-candidates-grid');
-  grid.innerHTML = '';
+  const grid = document.getElementById('vote-candidates-grid'); grid.innerHTML = '';
   for (let i = 0; i < state.playerCount; i++) {
     if (i === vIdx) continue;
     const btn = document.createElement('button');
     btn.className = 'vote-candidate' + (state.voting.selectedCandidate === i ? ' selected' : '');
     btn.textContent = state.players[i].name;
-    btn.onclick = () => {
-      AudioEngine.play('click');
-      state.voting.selectedCandidate = i;
-      updateVoteUI();
-    };
+    btn.onclick = () => { AudioEngine.play('click'); state.voting.selectedCandidate = i; updateVoteUI(); };
     grid.appendChild(btn);
   }
-
   const confirmBtn = document.getElementById('vote-confirm-btn');
-  if (state.voting.selectedCandidate === null) {
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = 'ВЫБЕРИТЕ ПОДОЗРЕВАЕМОГО';
-  } else {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = (vIdx === state.playerCount - 1) ? 'ПОДВЕСТИ ИТОГИ' : 'ПЕРЕДАТЬ ТЕЛЕФОН';
-  }
+  if (state.voting.selectedCandidate === null) { confirmBtn.disabled = true; confirmBtn.textContent = 'ВЫБЕРИТЕ ПОДОЗРЕВАЕМОГО'; }
+  else { confirmBtn.disabled = false; confirmBtn.textContent = (vIdx === state.playerCount - 1) ? 'ПОДВЕСТИ ИТОГИ' : 'ПЕРЕДАТЬ ТЕЛЕФОН'; }
 }
-
 function submitSingleVote() {
   AudioEngine.play('click');
   const target = state.voting.selectedCandidate;
   if (target === null) return;
-
   state.voting.votes[target] = (state.voting.votes[target] || 0) + 1;
-
-  if (state.voting.voterIndex < state.playerCount - 1) {
-    state.voting.voterIndex++;
-    state.voting.selectedCandidate = null;
-    updateVoteUI();
-  } else {
-    tallyVotes();
-  }
+  if (state.voting.voterIndex < state.playerCount - 1) { state.voting.voterIndex++; state.voting.selectedCandidate = null; updateVoteUI(); }
+  else tallyVotes();
 }
-
 function tallyVotes() {
-  let maxVotes = 0;
-  let leaders = [];
+  let maxVotes = 0; let leaders = [];
   for (const [pIdxStr, count] of Object.entries(state.voting.votes)) {
     const pIdx = parseInt(pIdxStr, 10);
-    if (count > maxVotes) {
-      maxVotes = count;
-      leaders = [pIdx];
-    } else if (count === maxVotes) {
-      leaders.push(pIdx);
-    }
+    if (count > maxVotes) { maxVotes = count; leaders = [pIdx]; }
+    else if (count === maxVotes) leaders.push(pIdx);
   }
-
   if (leaders.length !== 1) {
-    showResultModal('neutral', 'НИЧЬЯ!', 'Ничья! Никого не выгнали. Возвращаемся к обсуждению.', () => {
-      goScreen('screen-discuss');
-    });
+    showResultModal('neutral', 'НИЧЬЯ!', 'Ничья! Никого не выгнали. Возвращаемся к обсуждению.', () => goScreen('screen-discuss'));
     return;
   }
-
   const accusedIdx = leaders[0];
   const accusedName = state.players[accusedIdx].name;
   const spyIdx = state.round.spyIndex;
   const spyName = state.players[spyIdx].name;
-
   if (accusedIdx === spyIdx) {
-    awardPointsToCivilians(1);
-    AudioEngine.play('win');
-    showResultModal(
-      'win',
-      'ШПИОН РАСКРЫТ!',
-      `Голосованием выгнали: ${accusedName}. Это был шпион! Мирные получают +1 балл. Шпион сразу проигрывает без права угадать секрет.`,
-      () => openFinalRevealOnly()
-    );
+    awardPointsToCivilians(1); AudioEngine.play('win');
+    showResultModal('win', 'ШПИОН РАСКРЫТ!', `Голосованием выгнали: ${accusedName}. Это был шпион! Мирные получают +1 балл. Шпион сразу проигрывает без права угадать секрет.`, () => openFinalRevealOnly());
   } else {
-    awardPointsToSpy(6);
-    AudioEngine.play('lose');
-    showResultModal(
-      'lose',
-      'ПОБЕДА ШПИОНА!',
-      `Голосованием выгнали: ${accusedName}. Ошибка! Настоящим шпионом был ${spyName}. Автоматическая победа шпиона (+6 баллов)!`,
-      () => openFinalRevealOnly()
-    );
+    awardPointsToSpy(6); AudioEngine.play('lose');
+    showResultModal('lose', 'ПОБЕДА ШПИОНА!', `Голосованием выгнали: ${accusedName}. Ошибка! Настоящим шпионом был ${spyName}. Автоматическая победа шпиона (+6 баллов)!`, () => openFinalRevealOnly());
   }
 }
 
 function openSpyGuessScreen() {
   AudioEngine.play('click');
   const isLoc = state.mode === 'locations';
-  const spyName = state.players[state.round.spyIndex].name;
-
-  document.getElementById('reveal-spy-name').textContent = spyName;
+  document.getElementById('reveal-spy-name').textContent = state.players[state.round.spyIndex].name;
   document.getElementById('spy-guess-section').style.display = 'block';
   document.getElementById('final-secret-card').style.display = 'none';
   document.getElementById('guess-prompt-label').textContent = `${isLoc ? 'ВЫБЕРИТЕ ЛОКАЦИЮ' : 'ВЫБЕРИТЕ СЛОВО'} · Переход по первой букве`;
   document.getElementById('letter-jump-input').value = '';
   document.getElementById('hint-chips-area').innerHTML = '';
-
-  ['hint-half', 'hint-5', 'hint-3'].forEach(id => {
-    const b = document.getElementById(id);
-    b.disabled = false;
-    b.classList.remove('used');
-  });
-
-  const listEl = document.getElementById('guess-words-list');
-  listEl.innerHTML = state.round.pool.map((word, idx) => {
+  ['hint-half', 'hint-5', 'hint-3'].forEach(id => { const b = document.getElementById(id); b.disabled = false; b.classList.remove('used'); });
+  document.getElementById('guess-words-list').innerHTML = state.round.pool.map((word, idx) => {
     const num = String(idx + 1).padStart(2, '0');
     return `<button class="guess-word-card" data-word="${word.toLowerCase()}" onclick="evaluateSpyGuess('${word.replace(/'/g, "\\'")}')"><span>${num} ·</span> ${word}</button>`;
   }).join('');
-
   goScreen('screen-reveal');
 }
-
 function jumpToLetter(char) {
-  const letter = char.trim().toLowerCase();
-  if (!letter) return;
-  const listEl = document.getElementById('guess-words-list');
-  const cards = Array.from(listEl.querySelectorAll('.guess-word-card'));
+  const letter = char.trim().toLowerCase(); if (!letter) return;
+  const cards = Array.from(document.getElementById('guess-words-list').querySelectorAll('.guess-word-card'));
   const targetCard = cards.find(c => c.dataset.word.startsWith(letter));
-  if (targetCard) {
-    targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else {
-    alert(`Вариантов на букву «${char.toUpperCase()}» в этом раунде нет.`);
-  }
+  if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  else alert(`Вариантов на букву «${char.toUpperCase()}» в этом раунде нет.`);
 }
-
 function useSpyHint(type) {
   if (state.round.usedHint) return;
-  AudioEngine.play('click');
-  state.round.usedHint = type;
-
+  AudioEngine.play('click'); state.round.usedHint = type;
   ['hint-half', 'hint-5', 'hint-3'].forEach(id => {
     const btn = document.getElementById(id);
-    if (id === `hint-${type}`) {
-      btn.classList.add('used');
-    } else {
-      btn.disabled = true;
-    }
+    if (id === `hint-${type}`) btn.classList.add('used'); else btn.disabled = true;
   });
-
   const secret = state.round.secret;
   const others = shuffleArray(state.round.pool.filter(w => w !== secret));
-  let count = 3;
-  if (type === 'half') count = Math.max(2, Math.ceil(state.round.pool.length / 2));
-  if (type === '5') count = Math.min(5, state.round.pool.length);
-  if (type === '3') count = Math.min(3, state.round.pool.length);
-
+  let count = type === 'half' ? Math.max(2, Math.ceil(state.round.pool.length / 2)) : type === '5' ? Math.min(5, state.round.pool.length) : Math.min(3, state.round.pool.length);
   const subset = shuffleArray([secret, ...others.slice(0, count - 1)]).sort((a, b) => a.localeCompare(b, 'ru'));
-  const chipsArea = document.getElementById('hint-chips-area');
-  chipsArea.innerHTML = subset.map(w => `<button class="hint-chip" onclick="evaluateSpyGuess('${w.replace(/'/g, "\\'")}')">${w}</button>`).join('');
+  document.getElementById('hint-chips-area').innerHTML = subset.map(w => `<button class="hint-chip" onclick="evaluateSpyGuess('${w.replace(/'/g, "\\'")}')">${w}</button>`).join('');
 }
-
 function evaluateSpyGuess(chosenWord) {
   const isCorrect = chosenWord === state.round.secret;
   const hint = state.round.usedHint;
-  const isLoc = state.mode === 'locations';
-  const typeWord = isLoc ? 'локацию' : 'слово';
+  const typeWord = state.mode === 'locations' ? 'локацию' : 'слово';
   const hintLabel = hint === 'half' ? 'Подсказка «Половина»' : hint === '5' ? 'Подсказка «5 слов»' : hint === '3' ? 'Подсказка «3 слова»' : 'Без подсказки';
-
   if (isCorrect) {
-    const spyPts = hint === null ? 6 : hint === 'half' ? 3 : hint === '5' ? 1 : 0;
-    awardPointsToSpy(spyPts);
-    AudioEngine.play('win');
-    showResultModal(
-      'win',
-      'ПОБЕДА ШПИОНА!',
-      `Шпион угадал ${typeWord}. ${hintLabel}: шпион угадал и получает +${spyPts} баллов!`,
-      () => openFinalRevealOnly()
-    );
+      const spyPts = hint === null ? 6 : hint === 'half' ? 3 : hint === '5' ? 1 : 0;
+    awardPointsToSpy(spyPts); AudioEngine.play('win');
+    showResultModal('win', 'ПОБЕДА ШПИОНА!', `Шпион угадал ${typeWord}. ${hintLabel}: шпион угадал и получает +${spyPts} баллов!`, () => openFinalRevealOnly());
   } else {
     const civPts = hint === null ? 1 : hint === 'half' ? 2 : hint === '5' ? 4 : 6;
-    awardPointsToCivilians(civPts);
-    AudioEngine.play('lose');
-    showResultModal(
-      'lose',
-      'ПОРАЖЕНИЕ ШПИОНА!',
-      `Шпион не угадал. Правильный ответ: ${state.round.secret.toUpperCase()}. ${hintLabel}: шпион не угадал. Мирные получают +${civPts} балла!`,
-      () => openFinalRevealOnly()
-    );
+    awardPointsToCivilians(civPts); AudioEngine.play('lose');
+    showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНА!', `Шпион не угадал. Правильный ответ: ${state.round.secret.toUpperCase()}. ${hintLabel}: шпион не угадал. Мирные получают +${civPts} балла!`, () => openFinalRevealOnly());
   }
 }
-
 function openFinalRevealOnly() {
   const isLoc = state.mode === 'locations';
-  const spyName = state.players[state.round.spyIndex].name;
-  document.getElementById('reveal-spy-name').textContent = spyName;
+  document.getElementById('reveal-spy-name').textContent = state.players[state.round.spyIndex].name;
   document.getElementById('spy-guess-section').style.display = 'none';
   document.getElementById('final-secret-card').style.display = 'flex';
   document.getElementById('final-secret-label').textContent = isLoc ? 'СЕКРЕТНАЯ ЛОКАЦИЯ' : 'ЗАГАДАННОЕ СЛОВО';
@@ -1606,67 +732,37 @@ function openFinalRevealOnly() {
   checkTargetScoreWinner();
 }
 
-function awardPointsToSpy(pts) {
-  if (state.round.pointsAwarded) return;
-  state.round.pointsAwarded = true;
-  state.players[state.round.spyIndex].score += pts;
-}
-
+function awardPointsToSpy(pts) { if (state.round.pointsAwarded) return; state.round.pointsAwarded = true; state.players[state.round.spyIndex].score += pts; }
 function awardPointsToCivilians(pts) {
-  if (state.round.pointsAwarded) return;
-  state.round.pointsAwarded = true;
-  for (let i = 0; i < state.playerCount; i++) {
-    if (i !== state.round.spyIndex) {
-      state.players[i].score += pts;
-    }
-  }
+  if (state.round.pointsAwarded) return; state.round.pointsAwarded = true;
+  for (let i = 0; i < state.playerCount; i++) if (i !== state.round.spyIndex) state.players[i].score += pts;
 }
-
 function checkTargetScoreWinner() {
-  const target = state.settings.targetScore;
-  if (target <= 0) return;
+  const target = state.settings.targetScore; if (target <= 0) return;
   const winners = state.players.slice(0, state.playerCount).filter(p => p.score >= target);
   if (winners.length > 0) {
     winners.sort((a, b) => b.score - a.score);
-    setTimeout(() => {
-      alert(`🏆 ИГРА ОКОНЧЕНА!\n\nПобедитель матча: ${winners[0].name} (${winners[0].score} баллов из ${target})!`);
-    }, 300);
+    setTimeout(() => alert(`🏆 ИГРА ОКОНЧЕНА!\n\nПобедитель матча: ${winners.name} (${winners.score} баллов из ${target})!`), 300);
   }
 }
-
 function openScoreModal() {
   const target = state.settings.targetScore;
   document.getElementById('score-target-subtitle').textContent = target > 0 ? `Цель игры: ${target} баллов` : 'Цель игры: Без лимита';
-  const list = document.getElementById('score-list-container');
-  const activePlayers = state.players.slice(0, state.playerCount);
-  list.innerHTML = activePlayers.map(p => `
-    <div class="score-item">
-      <span>${p.name}</span>
-      <span>${p.score} Б.</span>
-    </div>
-  `).join('');
+  document.getElementById('score-list-container').innerHTML = state.players.slice(0, state.playerCount).map(p => `<div class="score-item"><span>${p.name}</span><span>${p.score} Б.</span></div>`).join('');
   openModal('modal-score');
 }
-
 function showResultModal(type, title, text, onClose) {
-  const box = document.getElementById('result-modal-box');
-  box.className = `modal-box result-card ${type}`;
+  document.getElementById('result-modal-box').className = `modal-box result-card ${type}`;
   document.getElementById('result-modal-title').textContent = title;
   document.getElementById('result-modal-text').textContent = text;
   state.round.afterResultAction = onClose;
   document.getElementById('modal-result').classList.add('active');
 }
-
 function closeResultModal() {
   AudioEngine.play('click');
   document.getElementById('modal-result').classList.remove('active');
-  if (typeof state.round.afterResultAction === 'function') {
-    const fn = state.round.afterResultAction;
-    state.round.afterResultAction = null;
-    fn();
-  }
+  if (typeof state.round.afterResultAction === 'function') { const fn = state.round.afterResultAction; state.round.afterResultAction = null; fn(); }
 }
 </script>
 </body>
-  </html>
-    
+</html>
