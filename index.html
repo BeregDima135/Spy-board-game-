@@ -1113,6 +1113,109 @@ openFinalRevealOnly = function() {
   }
 };
 </script>
+<div id="custom-guess-controls" style="display:none;flex-direction:column;gap:10px;margin-bottom:14px;">
+  <button class="btn-gold" onclick="resolveCustomGuess(true)">ШПИОНЫ УГАДАЛИ (+6)</button>
+  <button class="btn-secondary" style="border-color:var(--red);color:var(--red);" onclick="resolveCustomGuess(false)">НЕ УГАДАЛИ (+1 МИРНЫМ)</button>
+</div>
+
+<script>
+state.settings.showCategoryHint = true;
+
+// Добавляем переключатель подсказки категории в Настройки
+(function injectCatHintSetting() {
+  const voteBtn = document.getElementById('setting-vote-btn');
+  if (voteBtn && !document.getElementById('setting-cathint-btn')) {
+    const group = document.createElement('div');
+    group.className = 'setting-group';
+    group.innerHTML = `<div class="setting-label">Подсказка шпиону (Классика/Локации)</div><button class="toggle-full-btn" id="setting-cathint-btn" onclick="toggleCatHintSetting()">Подсказка категории: Вкл</button>`;
+    voteBtn.parentNode.parentNode.insertBefore(group, voteBtn.parentNode.nextSibling);
+  }
+})();
+
+function toggleCatHintSetting() {
+  AudioEngine.play('click');
+  state.settings.showCategoryHint = !state.settings.showCategoryHint;
+  document.getElementById('setting-cathint-btn').textContent = 'Подсказка категории: ' + (state.settings.showCategoryHint ? 'Вкл' : 'Выкл');
+}
+
+function getStandardHintText() {
+  if (!state.settings.showCategoryHint) return '';
+  if (state.mode === 'locations') return 'Режим: Локации';
+  if (state.category === 'mixed') return 'Категория: Смешанные';
+  const catObj = window.SPY_WORDS_DB.categories[state.category];
+  return catObj ? `Категория: ${catObj.name}` : '';
+}
+
+// Обновляем отображение карточки шпиона для всех режимов
+const _prevUpdateDealUI = updateDealUI;
+updateDealUI = function() {
+  _prevUpdateDealUI();
+  if (!state.round.cardOpened) return;
+  const idx = state.round.dealIndex;
+  const spies = state.round.spyIndices || [state.round.spyIndex];
+  if (!spies.includes(idx)) return;
+
+  const isLoc = state.mode === 'locations';
+  const hintText = state.mode === 'custom' ? state.round.customHint : getStandardHintText();
+  const hintHtml = hintText ? `<div class="spy-hint-badge">${hintText}</div>` : '';
+  const descText = isLoc ? 'Секретная локация неизвестна! Выведайте её у других.' : 'Секретное слово неизвестно! Выведайте его у других.';
+
+  document.getElementById('card-opened-body').innerHTML = `
+    <div class="spy-role-title">ШПИОН</div>
+    <div class="spy-role-desc">${descText}</div>
+    ${hintHtml}
+  `;
+};
+
+// Переносим кнопки угадывания для режима «Свой» внутрь экрана раскрытия
+(function moveCustomControls() {
+  const ctrl = document.getElementById('custom-guess-controls');
+  const guessSec = document.getElementById('spy-guess-section');
+  if (ctrl && guessSec) guessSec.parentNode.insertBefore(ctrl, guessSec.nextSibling);
+})();
+
+openSpyGuessScreen = function() {
+  if (state.mode !== 'custom') {
+    document.getElementById('custom-guess-controls').style.display = 'none';
+    _origOpenSpyGuessScreen();
+    return;
+  }
+  AudioEngine.play('click');
+  const spies = state.round.spyIndices || [];
+  if (spies.length === 0) {
+    showResultModal('neutral', 'РАУНД ЗАВЕРШЁН', 'В этом раунде не было ни одного шпиона!', () => openFinalRevealOnly());
+    return;
+  }
+  document.getElementById('reveal-spy-name').textContent = getSpyNamesText();
+  document.getElementById('spy-guess-section').style.display = 'none';
+  document.getElementById('final-secret-card').style.display = 'none';
+  document.getElementById('custom-guess-controls').style.display = 'flex';
+  goScreen('screen-reveal');
+};
+
+function resolveCustomGuess(isCorrect) {
+  const spies = state.round.spyIndices || [];
+  document.getElementById('custom-guess-controls').style.display = 'none';
+  if (isCorrect) {
+    spies.forEach(i => { state.players[i].score += 6; });
+    AudioEngine.play('win');
+    showResultModal('win', 'ПОБЕДА ШПИОНОВ!', `Шпионы (${getSpyNamesText()}) угадали слово «${state.round.secret.toUpperCase()}» и получают +6 баллов!`, () => openFinalRevealOnly());
+  } else {
+    for (let i = 0; i < state.playerCount; i++) {
+      if (!spies.includes(i)) state.players[i].score += 1;
+    }
+    AudioEngine.play('lose');
+    showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНОВ!', `Шпионы ошиблись! Правильное слово: ${state.round.secret.toUpperCase()}. Мирные получают +1 балл!`, () => openFinalRevealOnly());
+  }
+}
+
+const _prevOpenFinalRevealOnly = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  document.getElementById('custom-guess-controls').style.display = 'none';
+  _prevOpenFinalRevealOnly();
+};
+</script>
 </body>
 </html>
+
 
