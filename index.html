@@ -2479,9 +2479,20 @@ openFinalRevealOnly = function() {
   }
 };
 </script>
+<script>
+state.boardZoom = 0.32;
+
+const _default32OpenBoard = openGameBoard;
+openGameBoard = function(animateJump) {
+  _default32OpenBoard(animateJump);
+  if (typeof applyBoardZoom === 'function') {
+    applyBoardZoom(state.boardZoom);
+  }
+};
+</script>
 </body>
-  </html>
-    
+</html>
+
 
 
 
