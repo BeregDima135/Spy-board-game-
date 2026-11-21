@@ -1303,6 +1303,317 @@ tallyVotes = function() {
   }
 };
 </script>
+<script>
+const LANE_COLORS = [
+  '#3ec6b8', '#e5b869', '#ff5e6c', '#a855f7',
+  '#10b981', '#38bdf8', '#f59e0b', '#fb7185',
+  '#84cc16', '#818cf8', '#fb923c', '#2dd4bf'
+];
+
+state.settings.showBoard = true;
+state.boardCurves = new Array();
+
+try {
+  const savedSt = JSON.parse(localStorage.getItem('spy_app_state') || '{}');
+  if (typeof savedSt.showBoard === 'boolean') state.settings.showBoard = savedSt.showBoard;
+} catch (e) {}
+
+function updateBoardButtonsVisibility() {
+  const show = state.settings.showBoard;
+  const b1 = document.getElementById('btn-open-board-modes');
+  const b2 = document.getElementById('btn-open-board-reveal');
+  if (b1) b1.style.display = show ? 'flex' : 'none';
+  if (b2) b2.style.display = show ? 'flex' : 'none';
+}
+
+function toggleBoardSetting() {
+  AudioEngine.play('click');
+  state.settings.showBoard = !state.settings.showBoard;
+  const btn = document.getElementById('setting-board-btn');
+  if (btn) btn.textContent = `Игровое поле: ${state.settings.showBoard ? 'Вкл' : 'Выкл'}`;
+  updateBoardButtonsVisibility();
+  if (typeof saveAllAppSettings === 'function') {
+    saveAllAppSettings();
+    try {
+      const cur = JSON.parse(localStorage.getItem('spy_app_state') || '{}');
+      cur.showBoard = state.settings.showBoard;
+      localStorage.setItem('spy_app_state', JSON.stringify(cur));
+    } catch (e) {}
+  }
+}
+
+(function injectBoardSettingAndButtons() {
+  const voteBtn = document.getElementById('setting-vote-btn');
+  if (voteBtn && !document.getElementById('setting-board-btn')) {
+    const grp = document.createElement('div');
+    grp.className = 'setting-group';
+    grp.innerHTML = `<div class="setting-label">Тактическая карта прогресса</div><button class="toggle-full-btn" id="setting-board-btn" onclick="toggleBoardSetting()">Игровое поле: ${state.settings.showBoard ? 'Вкл' : 'Выкл'}</button>`;
+    voteBtn.parentNode.parentNode.insertBefore(grp, voteBtn.parentNode.nextSibling);
+  }
+
+  const modeTop = document.querySelector('#screen-modes .top-bar');
+  if (modeTop && !document.getElementById('btn-open-board-modes')) {
+    const b = document.createElement('button');
+    b.id = 'btn-open-board-modes';
+    b.className = 'circle-btn gold-ring';
+    b.style.cssText = 'border-color:rgba(62,198,184,0.55);color:#4ef2e0;align-items:center;justify-content:center;';
+    b.textContent = 'Поле';
+    b.onclick = () => openGameBoard(false);
+    modeTop.insertBefore(b, modeTop.lastElementChild);
+  }
+
+  const revTop = document.querySelector('#screen-reveal .top-bar');
+  if (revTop && !document.getElementById('btn-open-board-reveal')) {
+    const b2 = document.createElement('button');
+    b2.id = 'btn-open-board-reveal';
+    b2.className = 'circle-btn gold-ring';
+    b2.style.cssText = 'border-color:rgba(62,198,184,0.55);color:#4ef2e0;align-items:center;justify-content:center;';
+    b2.textContent = 'Поле';
+    b2.onclick = () => openGameBoard(false);
+    revTop.insertBefore(b2, revTop.lastElementChild);
+  }
+
+  updateBoardButtonsVisibility();
+})();
+
+function generateBoardCurves() {
+  const curves = new Array();
+  for (let i = 0; i < 50; i++) {
+    curves.push({
+      phase: Math.random() * Math.PI * 2,
+      freq: 0.55 + Math.random() * 0.45,
+      amp: 11 + Math.random() * 7
+    });
+  }
+  state.boardCurves = curves;
+}
+
+const _boardOrigProceed = proceedToModes;
+proceedToModes = function() {
+  generateBoardCurves();
+  _boardOrigProceed();
+};
+
+const _boardOrigResetScores = resetAllScores;
+resetAllScores = function() {
+  _boardOrigResetScores();
+  generateBoardCurves();
+};
+
+const _boardOrigStart = startRound;
+startRound = function() {
+  state.round.startScores = state.players.slice(0, state.playerCount).map(p => p.score);
+  _boardOrigStart();
+};
+
+let boardAutoTimer = null;
+const _boardOrigReveal = openFinalRevealOnly;
+openFinalRevealOnly = function() {
+  _boardOrigReveal();
+  if (boardAutoTimer) clearTimeout(boardAutoTimer);
+  if (!state.settings.showBoard) return;
+
+  const startScores = state.round.startScores || new Array();
+  const activePlayers = state.players.slice(0, state.playerCount);
+  const hasGain = activePlayers.some((p, i) => p.score > (startScores.at(i) ?? p.score));
+  if (!hasGain) return;
+
+  const card = document.querySelector('#final-secret-card .dossier-card');
+  if (card && !document.getElementById('reveal-auto-bar')) {
+    const bar = document.createElement('div');
+    bar.id = 'reveal-auto-bar';
+    bar.className = 'reveal-auto-bar';
+    bar.innerHTML = '<div class="reveal-auto-fill" id="reveal-auto-fill"></div>';
+    card.appendChild(bar);
+  }
+  const fill = document.getElementById('reveal-auto-fill');
+  if (fill) {
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    requestAnimationFrame(() => {
+      fill.style.transition = 'width 1.6s linear';
+      fill.style.width = '100%';
+    });
+  }
+
+  boardAutoTimer = setTimeout(() => {
+    const revScreen = document.getElementById('screen-reveal');
+    if (revScreen) revScreen.classList.add('blur-out');
+    setTimeout(() => {
+      openGameBoard(true);
+      if (revScreen) revScreen.classList.remove('blur-out');
+    }, 320);
+  }, 1650);
+};
+  function closeGameBoard() {
+  AudioEngine.play('click');
+  document.getElementById('modal-board').classList.remove('active');
+}
+
+function openGameBoard(animateJump) {
+  AudioEngine.play('flip');
+  if (!state.boardCurves || state.boardCurves.length === 0) {
+    generateBoardCurves();
+  }
+
+  const overlay = document.getElementById('modal-board');
+  const canvas = document.getElementById('board-canvas');
+  const viewport = document.getElementById('board-viewport');
+  const goalLabel = document.getElementById('board-goal-label');
+
+  const count = state.playerCount;
+  const players = state.players.slice(0, count);
+  const startScores = (animateJump && state.round.startScores) ? state.round.startScores : players.map(p => p.score);
+  const target = state.settings.targetScore;
+  const maxCurrentScore = Math.max(...players.map(p => p.score), 0);
+
+  const hasFinish = target > 0;
+  const totalSteps = hasFinish ? Math.max(target, maxCurrentScore) : Math.max(12, maxCurrentScore + 5);
+  goalLabel.textContent = hasFinish ? `ФИНИШ: ${target} Б.` : 'РЕЖИМ: БЕЗ ЛИМИТА';
+
+  const stepWidth = 56;
+  const leftPad = 46;
+  const rightPad = 70;
+  const laneHeight = 96;
+  const totalWidth = leftPad + totalSteps * stepWidth + rightPad;
+  const totalHeight = count * laneHeight + 24;
+
+  canvas.style.width = totalWidth + 'px';
+  canvas.style.height = totalHeight + 'px';
+
+  let svgHtml = `<svg width="${totalWidth}" height="${totalHeight}" style="position:absolute;top:0;left:0;overflow:visible;">
+    <defs>
+      <filter id="neonGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="3.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="finishCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff6d6"/>
+        <stop offset="45%" stop-color="#e5b869"/>
+        <stop offset="100%" stop-color="#3ec6b8"/>
+      </radialGradient>
+    </defs>`;
+
+  let labelsHtml = '';
+  let tokensHtml = '';
+  const laneCoords = new Array();
+
+  for (let pIdx = 0; pIdx < count; pIdx++) {
+    const color = LANE_COLORS.at(pIdx % LANE_COLORS.length);
+    const baseY = 54 + pIdx * laneHeight;
+    const oldScore = Math.min(startScores.at(pIdx) ?? players.at(pIdx).score, totalSteps);
+    const newScore = Math.min(players.at(pIdx).score, totalSteps);
+
+    const curve = state.boardCurves.at(pIdx) || { phase: pIdx, freq: 0.7, amp: 14 };
+    const pts = new Array();
+    for (let s = 0; s <= totalSteps; s++) {
+      const x = leftPad + s * stepWidth;
+      const wave = s === 0 ? 0 : Math.sin(s * curve.freq + curve.phase) * curve.amp;
+      const y = Math.round(baseY + wave);
+      pts.push({ x, y });
+    }
+    laneCoords.push({ pts, oldScore, newScore, color, pIdx });
+
+    const firstPt = pts.at(0);
+    let d = `M ${firstPt.x} ${firstPt.y}`;
+    for (let s = 0; s < pts.length - 1; s++) {
+      const p1 = pts.at(s);
+      const p2 = pts.at(s + 1);
+      const midX = (p1.x + p2.x) / 2;
+      d += ` C ${midX} ${p1.y}, ${midX} ${p2.y}, ${p2.x} ${p2.y}`;
+    }
+
+    svgHtml += `<path d="${d}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-linecap="round"/>`;
+    svgHtml += `<path d="${d}" fill="none" stroke="${color}" stroke-opacity="0.38" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+
+    for (let s = 0; s <= totalSteps; s++) {
+      const pt = pts.at(s);
+      const isFinishNode = hasFinish && s === target;
+      const isPassed = s <= oldScore;
+
+      if (isFinishNode) {
+        svgHtml += `
+          <g id="node-${pIdx}-${s}">
+            <circle cx="${pt.x}" cy="${pt.y}" r="24" fill="rgba(229,184,105,0.14)" filter="url(#neonGlow)"/>
+            <circle class="finish-outer-ring" cx="${pt.x}" cy="${pt.y}" r="20" fill="none" stroke="url(#finishCore)" stroke-width="2.5" stroke-dasharray="6 4"/>
+            <circle cx="${pt.x}" cy="${pt.y}" r="14" fill="url(#finishCore)" stroke="#ffffff" stroke-width="2"/>
+            <text x="${pt.x}" y="${pt.y + 4}" text-anchor="middle" fill="#120e07" font-size="11" font-weight="900">👑</text>
+          </g>`;
+      } else {
+        const r = s === 0 ? 11 : 10;
+        const fill = isPassed ? color : '#0c141a';
+        const stroke = isPassed ? '#ffffff' : 'rgba(255,255,255,0.25)';
+        const txtColor = isPassed ? '#070b0e' : '#7b8b99';
+        svgHtml += `
+          <g id="node-${pIdx}-${s}">
+            <circle cx="${pt.x}" cy="${pt.y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
+            <text x="${pt.x}" y="${pt.y + 3.5}" text-anchor="middle" fill="${txtColor}" font-size="9" font-weight="800">${s === 0 ? 'S' : s}</text>
+          </g>`;
+      }
+    }
+
+    const pName = players.at(pIdx).name;
+    const pScore = players.at(pIdx).score;
+    labelsHtml += `<div class="lane-label-tag" style="position:absolute;top:${pIdx * laneHeight + 8}px;border-color:${color}66;color:${color};">
+      <span class="lane-dot" style="background:${color};box-shadow:0 0 8px ${color};"></span>
+      ${pName} · ${pScore} б.
+    </div>`;
+
+    const startPt = pts.at(oldScore);
+    const initials = pName.slice(0, 2).toUpperCase();
+    tokensHtml += `<div class="player-token" id="token-${pIdx}" data-name="${pName}" style="left:${startPt.x}px;top:${startPt.y}px;--token-color:${color};">${initials}</div>`;
+  }
+
+  svgHtml += '</svg>';
+  canvas.innerHTML = svgHtml + labelsHtml + tokensHtml;
+  overlay.classList.add('active');
+
+  const minStart = Math.min(...laneCoords.map(l => l.oldScore));
+  viewport.scrollLeft = Math.max(0, minStart * stepWidth - 80);
+
+  if (animateJump) {
+    setTimeout(() => {
+      laneCoords.forEach(lane => {
+        if (lane.newScore <= lane.oldScore) return;
+        let step = lane.oldScore;
+        const hopTimer = setInterval(() => {
+          step++;
+          const pt = lane.pts.at(step);
+          const tok = document.getElementById(`token-${lane.pIdx}`);
+          if (tok && pt) {
+            tok.style.left = pt.x + 'px';
+            tok.style.top = pt.y + 'px';
+            tok.classList.remove('hopping');
+            void tok.offsetWidth;
+            tok.classList.add('hopping');
+
+            const nodeG = document.getElementById(`node-${lane.pIdx}-${step}`);
+            if (nodeG && !(hasFinish && step === target)) {
+              const c = nodeG.querySelector('circle');
+              const t = nodeG.querySelector('text');
+              if (c) { c.setAttribute('fill', lane.color); c.setAttribute('stroke', '#ffffff'); }
+              if (t) { t.setAttribute('fill', '#070b0e'); }
+            }
+
+            AudioEngine.play('click');
+            if (typeof triggerHaptic === 'function') triggerHaptic(18);
+            viewport.scrollTo({ left: Math.max(0, pt.x - viewport.clientWidth * 0.65), behavior: 'smooth' });
+          }
+
+          if (step >= lane.newScore) {
+            clearInterval(hopTimer);
+            if (hasFinish && step >= target) {
+              AudioEngine.play('win');
+              if (typeof spawnNeonBurst === 'function') spawnNeonBurst('#e5b869');
+            }
+          }
+        }, 340);
+      });
+    }, 550);
+  }
+}
+</script>
 </body>
 </html>
+
 
