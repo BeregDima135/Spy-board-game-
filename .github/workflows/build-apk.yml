@@ -1,4 +1,4 @@
- name: Build Android APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
@@ -27,9 +27,8 @@ jobs:
         run: |
           mkdir -p www assets
           cp index.html words.js www/
-          cp icon.png assets/icon-only.png
-          cp icon.png assets/icon-foreground.png
-          cp icon.png assets/icon-background.png
+          pip install pillow
+          python3 -c "from PIL import Image; img = Image.open('icon.png').convert('RGBA').resize((1024, 1024)); img.save('assets/icon-only.png'); img.save('assets/icon-foreground.png'); img.save('assets/icon-background.png')"
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/assets
           npx cap init "Кто шпион" "com.beregdima.spygame" --web-dir www
