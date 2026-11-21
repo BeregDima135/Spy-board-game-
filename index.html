@@ -764,5 +764,150 @@ function closeResultModal() {
   if (typeof state.round.afterResultAction === 'function') { const fn = state.round.afterResultAction; state.round.afterResultAction = null; fn(); }
 }
 </script>
+<style>
+  /* Бирюзовый неон и усиленный контраст */
+  body {
+    background: radial-gradient(circle at 50% 20%, #0d2b33 0%, #040709 80%) !important;
+  }
+  .spy-emblem {
+    border: 1.5px solid rgba(62, 198, 184, 0.55) !important;
+    box-shadow: 0 0 35px rgba(62, 198, 184, 0.28), inset 0 0 25px rgba(62, 198, 184, 0.15) !important;
+  }
+  .spy-emblem svg {
+    filter: drop-shadow(0 0 14px rgba(62, 198, 184, 0.65)) !important;
+  }
+  .main-subtitle {
+    color: #4ef2e0 !important;
+    text-shadow: 0 0 12px rgba(62, 198, 184, 0.5);
+  }
+  .pill-btn, .circle-btn, .counter-card, .player-row, .interrogation-box, .hints-panel {
+    border-color: rgba(62, 198, 184, 0.25) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  }
+  .dossier-card.closed {
+    border: 1.5px solid rgba(62, 198, 184, 0.55) !important;
+    box-shadow: 0 0 30px rgba(62, 198, 184, 0.18) !important;
+  }
+  .modal-box {
+    border: 1.5px solid rgba(62, 198, 184, 0.45) !important;
+    box-shadow: 0 0 45px rgba(62, 198, 184, 0.18), 0 20px 50px rgba(0,0,0,0.9) !important;
+  }
+
+  /* Эффекты финала: пульсация победы и тревоги */
+  @keyframes neonWinPulse {
+    0% { box-shadow: 0 0 15px rgba(62, 198, 184, 0.3); transform: scale(0.95); }
+    50% { box-shadow: 0 0 55px rgba(62, 198, 184, 0.75); transform: scale(1.02); }
+    100% { box-shadow: 0 0 30px rgba(62, 198, 184, 0.45); transform: scale(1); }
+  }
+  @keyframes neonLoseShake {
+    0%, 100% { transform: translateX(0); box-shadow: 0 0 35px rgba(224, 82, 82, 0.55); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .result-card.win {
+    border-color: #3ec6b8 !important;
+    animation: neonWinPulse 0.65s ease forwards;
+  }
+  .result-card.lose {
+    border-color: #e05252 !important;
+    animation: neonLoseShake 0.5s ease forwards;
+  }
+
+  /* Частицы салюта в финале */
+  .fx-particle {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999;
+    animation: particleFly 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+  }
+</style>
+
+<script>
+  // Виброотклик и визуальные эффекты финала
+  function triggerHaptic(pattern) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (e) {}
+  }
+
+  function spawnNeonBurst(color) {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    for (let i = 0; i < 36; i++) {
+      const p = document.createElement('div');
+      p.className = 'fx-particle';
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      p.style.background = i % 2 === 0 ? color : '#e5b869';
+      p.style.boxShadow = `0 0 10px ${color}`;
+      const angle = (Math.PI * 2 * i) / 36;
+      const dist = 80 + Math.random() * 140;
+      p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+      p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1050);
+    }
+  }
+
+  // Подключаем вибрацию и вспышки к существующему движку звука
+  const _origPlay = AudioEngine.play.bind(AudioEngine);
+  AudioEngine.play = function(type) {
+    _origPlay(type);
+    if (type === 'click') triggerHaptic(18);
+    if (type === 'flip') triggerHaptic([25, 30, 25]);
+    if (type === 'win') {
+      triggerHaptic([40, 40, 90]);
+      spawnNeonBurst('#3ec6b8');
+    }
+    if (type === 'lose') {
+      triggerHaptic([120, 50, 120]);
+      spawnNeonBurst('#e05252');
+    }
+  };
+state.settings.music = true;
+(function() {
+  const sb = document.getElementById('setting-sound-btn');
+  if (sb && !document.getElementById('setting-music-btn')) {
+    const mb = document.createElement('button');
+    mb.id = 'setting-music-btn'; mb.className = 'toggle-full-btn'; mb.style.marginTop = '8px';
+    mb.textContent = 'Музыка: Вкл';
+    mb.onclick = () => {
+      state.settings.music = !state.settings.music;
+      mb.textContent = 'Музыка: ' + (state.settings.music ? 'Вкл' : 'Выкл');
+      if (state.settings.music) AudioEngine.startMusic(); else AudioEngine.stopMusic();
+      AudioEngine.play('click');
+    };
+    sb.parentNode.appendChild(mb);
+  }
+})();
+AudioEngine.musicTimer = null; AudioEngine.step = 0; AudioEngine.bassNotes = [73.42, 73.42, 87.31, 98.00, 73.42, 73.42, 110.00, 98.00];
+AudioEngine.startMusic = function() {
+  if (!state.settings.music || this.musicTimer) return;
+  this.init(); if (this.ctx.state === 'suspended') this.ctx.resume();
+  this.musicTimer = setInterval(() => {
+    if (!state.settings.music || document.hidden) return;
+    try {
+      const now = this.ctx.currentTime, osc = this.ctx.createOscillator(), flt = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+      osc.type = 'triangle'; osc.frequency.setValueAtTime(this.bassNotes[this.step++ % 8], now);
+      flt.type = 'lowpass'; flt.frequency.setValueAtTime(260, now);
+      g.gain.setValueAtTime(0.001, now); g.gain.linearRampToValueAtTime(0.045, now + 0.08); g.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      osc.connect(flt); flt.connect(g); g.connect(this.ctx.destination); osc.start(now); osc.stop(now + 0.58);
+    } catch (e) {}
+  }, 620);
+};
+AudioEngine.stopMusic = function() { if (this.musicTimer) { clearInterval(this.musicTimer); this.musicTimer = null; } };
+document.addEventListener('pointerdown', () => { if (state.settings.music) AudioEngine.startMusic(); }, { once: true });
+document.addEventListener('visibilitychange', () => { if (document.hidden) AudioEngine.stopMusic(); else if (state.settings.music) AudioEngine.startMusic(); });
+  
+</script>
 </body>
 </html>
