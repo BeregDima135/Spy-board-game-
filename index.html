@@ -2531,8 +2531,192 @@ function confirmGoToPlayers() {
   }
 })();
 </script>
+<script>
+// Обновляем экран победы для поддержки одного или нескольких победителей + залпы салюта
+showChampionVictoryScreen = function(winnersList, targetScore) {
+  let overlay = document.getElementById('champion-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'champion-overlay';
+    overlay.className = 'champion-overlay';
+    overlay.innerHTML = `
+      <div class="champ-rays"></div>
+      <div class="champ-content">
+        <div class="champ-crown-ring">👑</div>
+        <div class="champ-kicker" id="champ-kicker-text">Абсолютный победитель</div>
+        <div class="champ-name" id="champ-winner-name">ИГРОК 1</div>
+        <div class="champ-score-badge" id="champ-winner-score">12 ИЗ 12 БАЛЛОВ</div>
+        <button class="btn-gold" style="box-shadow:0 0 30px rgba(229,184,105,0.45);" onclick="finishChampionMatch()">ЗАВЕРШИТЬ ИГРУ</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  const list = Array.isArray(winnersList) ? winnersList : new Array(winnersList);
+  const isMulti = list.length > 1;
+  const kicker = document.getElementById('champ-kicker-text');
+  if (kicker) kicker.textContent = isMulti ? 'Абсолютные победители' : 'Абсолютный победитель';
+
+  const namesStr = list.map(p => p.name).join(' · ');
+  const topScore = Math.max(...list.map(p => p.score));
+
+  document.getElementById('champ-winner-name').textContent = namesStr;
+  document.getElementById('champ-winner-score').textContent = `ДОСТИГНУТ ЛИМИТ: ${topScore} / ${targetScore} Б.`;
+  overlay.classList.add('active');
+
+  playVictoryFanfare();
+  if (typeof triggerHaptic === 'function') triggerHaptic(new Array(80, 50, 120, 50, 250));
+
+  // Несколько волн праздничного салюта
+  launchChampionConfetti();
+  setTimeout(launchChampionConfetti, 450);
+  setTimeout(launchChampionConfetti, 950);
+  setTimeout(launchChampionConfetti, 1500);
+};
+
+// Перезаписываем логику прыжков: ждём, пока все фишки-победители встанут на последний круг, выдерживаем паузу и запускаем салют
+const _multiChampOpenBoard = openGameBoard;
+openGameBoard = function(animateJump) {
+  // Вызываем базовую отрисовку без старого одиночного таймера
+  _multiChampOpenBoard(false);
+
+  const target = state.settings.targetScore;
+  const hasFinish = target > 0;
+  if (!animateJump) return;
+
+  const canvas = document.getElementById('board-canvas');
+  const viewport = document.getElementById('board-viewport');
+  const count = state.playerCount;
+  const players = state.players.slice(0, count);
+  const startScores = (state.roundStartScores && state.roundStartScores.length === count)
+    ? state.roundStartScores
+    : players.map(p => p.score);
+  const totalSteps = hasFinish ? target : Math.max(12, Math.max(...players.map(p => p.score), 0) + 5);
+
+  const stepWidth = 60;
+  const leftPad = 48;
+  const laneHeight = 102;
+
+  // Перестраиваем координаты и возвращаем фишки на стартовые позиции перед прыжками
+  const laneCoords = new Array();
+  for (let pIdx = 0; pIdx < count; pIdx++) {
+    const color = LANE_COLORS.at(pIdx % LANE_COLORS.length);
+    const baseY = 58 + pIdx * laneHeight;
+    const oldScore = Math.min(startScores.at(pIdx) ?? players.at(pIdx).score, totalSteps);
+    const newScore = Math.min(players.at(pIdx).score, totalSteps);
+    const curve = state.boardCurves.at(pIdx) || { phase: pIdx, freq: 0.7, amp: 14 };
+
+    const pts = new Array();
+    for (let s = 0; s <= totalSteps; s++) {
+      const x = leftPad + s * stepWidth;
+      const wave = s === 0 ? 0 : Math.sin(s * curve.freq + curve.phase) * curve.amp;
+      pts.push({ x, y: Math.round(baseY + wave) });
+    }
+    laneCoords.push({ pts, oldScore, newScore, color, pIdx });
+
+    const tok = document.getElementById(`token-${pIdx}`);
+    const stPt = pts.at(oldScore);
+    if (tok && stPt) {
+      tok.style.transition = 'none';
+      tok.style.left = stPt.x + 'px';
+      tok.style.top = stPt.y + 'px';
+      void tok.offsetWidth;
+      tok.style.transition = '';
+    }
+  }
+
+  const jumpers = laneCoords.filter(l => l.newScore > l.oldScore);
+  if (jumpers.length === 0) return;
+
+  let activeJumpersCount = jumpers.length;
+  const roundChampions = new Array();
+
+  setTimeout(() => {
+    jumpers.forEach(lane => {
+      let step = lane.oldScore;
+      let hopCount = 0;
+
+      const hopTimer = setInterval(() => {
+        step++;
+        hopCount++;
+        const pt = lane.pts.at(step);
+        const tok = document.getElementById(`token-${lane.pIdx}`);
+
+        if (tok && pt) {
+          tok.style.left = pt.x + 'px';
+          tok.style.top = pt.y + 'px';
+          tok.classList.remove('hopping');
+          void tok.offsetWidth;
+          tok.classList.add('hopping');
+
+          spawnLandingRipple(canvas, pt.x, pt.y, lane.color);
+
+          const nodeG = document.getElementById(`node-${lane.pIdx}-${step}`);
+          if (nodeG && !(hasFinish && step === target)) {
+            const c = nodeG.querySelector('.node-core');
+            const t = nodeG.querySelector('text');
+            if (c) { c.setAttribute('fill', lane.color); c.setAttribute('stroke', '#ffffff'); }
+            if (t) { t.setAttribute('fill', '#05090c'); }
+          }
+
+          playHopTone(hopCount);
+          if (typeof triggerHaptic === 'function') triggerHaptic(22);
+
+          const zoom = state.boardZoom || 1;
+          viewport.scrollTo({
+            left: Math.max(0, pt.x * zoom - viewport.clientWidth * 0.65),
+            behavior: 'smooth'
+          });
+        }
+
+        // Если эта фишка дошла до конца своих шагов в этом раунде
+        if (step >= lane.newScore) {
+          clearInterval(hopTimer);
+
+          if (hasFinish && step >= target) {
+            roundChampions.push(players.at(lane.pIdx));
+            if (typeof spawnNeonBurst === 'function') spawnNeonBurst('#e5b869');
+          }
+
+          activeJumpersCount--;
+
+          // Когда ВСЕ прыгающие фишки встали на свои места и есть победитель(и)
+          if (activeJumpersCount === 0 && roundChampions.length > 0) {
+            AudioEngine.play('win');
+            if (typeof spawnNeonBurst === 'function') {
+              setTimeout(() => spawnNeonBurst('#3ec6b8'), 400);
+              setTimeout(() => spawnNeonBurst('#e5b869'), 900);
+            }
+            // Пауза 2.3 секунды, чтобы полюбоваться фишками на последнем круге, затем окно победы
+            setTimeout(() => {
+              showChampionVictoryScreen(roundChampions, target);
+            }, 2300);
+          }
+        }
+      }, 380);
+
+      window.activeHopTimers.push(hopTimer);
+    });
+  }, 600);
+};
+
+// Если игровое поле выключено — тоже поддерживаем нескольких победителей
+openFinalRevealOnly = function() {
+  _cleanFinalReveal();
+  const target = state.settings.targetScore;
+  if (state.settings.showBoard || target <= 0) return;
+
+  const winners = state.players.slice(0, state.playerCount).filter(p => p.score >= target);
+  if (winners.length > 0) {
+    setTimeout(() => {
+      showChampionVictoryScreen(winners, target);
+    }, 2200);
+  }
+};
+</script>
 </body>
 </html>
+
 
 
 
