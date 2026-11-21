@@ -1177,21 +1177,22 @@ updateDealUI = function() {
   const hintHtml = hintText ? `<div class="spy-hint-badge">${hintText}</div>` : '';
   document.getElementById('card-opened-body').innerHTML = `<div class="spy-role-title">ШПИОН</div><div class="spy-role-desc">${isLoc ? 'Секретная локация неизвестна!' : 'Секретное слово неизвестно!'}</div>${hintHtml}`;
 };
- function getSpyNamesText() {
+    function getSpyNamesText() {
   const spies = state.round.spyIndices || [state.round.spyIndex];
   if (spies.length === 0) return 'Шпионов не было';
   if (spies.length === state.playerCount) return 'Все игроки были шпионами';
-  return spies.map(i => state.players[i].name).join(', ');
+  return spies.map(i => state.players.at(i).name).join(', ');
 }
 
 const _origGuess = openSpyGuessScreen;
 openSpyGuessScreen = function() {
   if (state.mode !== 'custom') {
     document.getElementById('custom-guess-controls').style.display = 'none';
-    _origGuess(); return;
+    _origGuess();
+    return;
   }
   AudioEngine.play('click');
-  const spies = state.round.spyIndices || [];
+  const spies = state.round.spyIndices || new Array();
   if (spies.length === 0) {
     showResultModal('neutral', 'РАУНД ЗАВЕРШЁН', 'В этом раунде не было ни одного шпиона!', () => openFinalRevealOnly());
     return;
@@ -1204,15 +1205,15 @@ openSpyGuessScreen = function() {
 };
 
 function resolveCustomGuess(isCorrect) {
-  const spies = state.round.spyIndices || [];
+  const spies = state.round.spyIndices || new Array();
   const s = state.scoring;
   document.getElementById('custom-guess-controls').style.display = 'none';
   if (isCorrect) {
-    spies.forEach(i => { state.players[i].score += s.customSpyWin; });
+    spies.forEach(i => { state.players.at(i).score += s.customSpyWin; });
     AudioEngine.play('win');
     showResultModal('win', 'ПОБЕДА ШПИОНОВ!', `Шпионы (${getSpyNamesText()}) угадали слово «${state.round.secret.toUpperCase()}» (+${s.customSpyWin} б.)!`, () => openFinalRevealOnly());
   } else {
-    for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players[i].score += s.customCivWin;
+    for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players.at(i).score += s.customCivWin;
     AudioEngine.play('lose');
     showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНОВ!', `Шпионы ошиблись! Правильное слово: ${state.round.secret.toUpperCase()}. Мирные получают +${s.customCivWin} б.!`, () => openFinalRevealOnly());
   }
@@ -1224,7 +1225,6 @@ openFinalRevealOnly = function() {
   _origFinal();
   if (state.mode === 'custom') document.getElementById('reveal-spy-name').textContent = getSpyNamesText();
 };
-
 function renderScoringEditor() {
   const groups = [
     { title: 'Без подсказок', items: [['locSpyWin','Локации: Шпион угадал'],['locCivWin','Локации: Ошибка (мирным)'],['easySpyWin','Лёгкие: Шпион угадал'],['easyCivWin','Лёгкие: Ошибка (мирным)'],['mediumSpyWin','Средние: Шпион угадал'],['mediumCivWin','Средние: Ошибка (мирным)'],['hardSpyWin','Хардкор: Шпион угадал'],['hardCivWin','Хардкор: Ошибка (мирным)']] },
@@ -1271,7 +1271,7 @@ evaluateSpyGuess = function(chosenWord) {
 };
 
 tallyVotes = function() {
-  let maxVotes = 0, leaders = [];
+  let maxVotes = 0, leaders = new Array();
   for (const [pIdxStr, count] of Object.entries(state.voting.votes)) {
     const pIdx = parseInt(pIdxStr, 10);
     if (count > maxVotes) { maxVotes = count; leaders = [pIdx]; }
@@ -1281,33 +1281,28 @@ tallyVotes = function() {
     showResultModal('neutral', 'НИЧЬЯ!', 'Голоса разделились поровну. Обсуждение продолжается!', () => goScreen('screen-discuss'));
     return;
   }
-  const accusedIdx = leaders[0];
+  const accusedIdx = leaders.at(0);
   const spies = state.round.spyIndices || [state.round.spyIndex];
   const s = state.scoring;
   if (spies.includes(accusedIdx)) {
     const pts = state.mode === 'custom' ? s.customVoteCaught : s.voteSpyCaught;
     if (!state.round.pointsAwarded) {
       state.round.pointsAwarded = true;
-      for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players[i].score += pts;
+      for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players.at(i).score += pts;
     }
     AudioEngine.play('win');
-    showResultModal('win', 'ШПИОН РАСКРЫТ!', `Выгнали: ${state.players[accusedIdx].name}. Это шпион! Мирным +${pts} б.`, () => openFinalRevealOnly());
+    showResultModal('win', 'ШПИОН РАСКРЫТ!', `Выгнали: ${state.players.at(accusedIdx).name}. Это шпион! Мирным +${pts} б.`, () => openFinalRevealOnly());
   } else {
     const pts = state.mode === 'custom' ? s.customVoteWrong : s.voteWrongPerson;
     if (!state.round.pointsAwarded) {
       state.round.pointsAwarded = true;
-      spies.forEach(i => { state.players[i].score += pts; });
+      spies.forEach(i => { state.players.at(i).score += pts; });
     }
     AudioEngine.play('lose');
-    showResultModal('lose', 'ПОБЕДА ШПИОНА!', `Выгнали мирного (${state.players[accusedIdx].name}). Шпионам (${getSpyNamesText()}) +${pts} б.!`, () => openFinalRevealOnly());
+    showResultModal('lose', 'ПОБЕДА ШПИОНА!', `Выгнали мирного (${state.players.at(accusedIdx).name}). Шпионам (${getSpyNamesText()}) +${pts} б.!`, () => openFinalRevealOnly());
   }
 };
 </script>
 </body>
 </html>
-
-   
-
-
-
 
