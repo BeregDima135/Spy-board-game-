@@ -1214,8 +1214,304 @@ openFinalRevealOnly = function() {
   document.getElementById('custom-guess-controls').style.display = 'none';
   _prevOpenFinalRevealOnly();
 };
+<style>
+  .sc-sec-title { font-size: 11px; letter-spacing: 1.5px; color: var(--teal); font-weight: 800; text-transform: uppercase; margin: 14px 0 8px; border-bottom: 1px solid rgba(62,198,184,0.2); padding-bottom: 4px; }
+  .sc-sec-title:first-child { margin-top: 0; }
+  .sc-row { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card-2); border: 1px solid var(--border-subtle); border-radius: 11px; padding: 8px 12px; margin-bottom: 7px; }
+  .sc-name { font-size: 13px; color: var(--text-main); font-weight: 600; max-width: 62%; line-height: 1.3; }
+  .sc-ctrl { display: flex; align-items: center; gap: 10px; }
+  .sc-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(229,184,105,0.4); background: rgba(229,184,105,0.1); color: var(--gold); font-size: 17px; font-weight: 800; cursor: pointer; }
+  .sc-val { font-size: 15px; font-weight: 800; color: var(--gold); min-width: 28px; text-align: center; }
+</style>
+
+<div class="modal-overlay" id="modal-scoring">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Настройка баллов</div>
+      <button class="circle-btn" onclick="closeModal('modal-scoring')">✕</button>
+    </div>
+    <div class="modal-scroll" id="scoring-editor-list"></div>
+    <div class="bottom-row" style="margin-top:12px;">
+      <button class="btn-dark" style="color:var(--red);" onclick="resetScoringDefaults()">Сбросить</button>
+      <button class="btn-gold" style="flex:1;" onclick="closeModal('modal-scoring')">ГОТОВО</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_SCORING = {
+  multEasy: 1,
+  multMedium: 1,
+  multHard: 1,
+  multLocations: 1,
+  spyNone: 6,
+  civNone: 1,
+  spyHalf: 3,
+  civHalf: 2,
+  spy5: 1,
+  civ5: 4,
+  spy3: 0,
+  civ3: 6,
+  voteCatchSpy: 1,
+  voteWrongCiv: 6,
+  customSpyWin: 6,
+  customCivWin: 1,
+  customVoteCatch: 1,
+  customVoteWrong: 6
+};
+
+state.scoring = Object.assign({}, DEFAULT_SCORING, JSON.parse(localStorage.getItem('spy_custom_scoring') || '{}'));
+
+(function injectScoringButton() {
+  const settingsBox = document.querySelector('#modal-settings .modal-box');
+  const resetBtn = settingsBox ? settingsBox.querySelector('button[onclick="resetAllScores()"]') : null;
+  if (settingsBox && resetBtn && !document.getElementById('open-scoring-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'open-scoring-btn';
+    btn.className = 'toggle-full-btn';
+    btn.style.cssText = 'margin-bottom:10px;border-color:rgba(229,184,105,0.45);color:var(--gold);';
+    btn.textContent = 'Настройка начисления баллов ⚙️';
+    btn.onclick = () => { renderScoringEditor(); openModal('modal-scoring'); };
+    settingsBox.insertBefore(btn, resetBtn);
+  }
+})();
+function renderScoringEditor() {
+  const container = document.getElementById('scoring-editor-list');
+  const groups = [
+    {
+      title: 'Угадывание без подсказок (по режимам и сложностям)',
+      items: [
+        ['locSpyWin', 'Локации — Шпион угадал'],
+        ['locCivWin', 'Локации — Шпион ошибся (мирным)'],
+        ['easySpyWin', 'Классика: Лёгкие — Шпион угадал'],
+        ['easyCivWin', 'Классика: Лёгкие — Шпион ошибся (мирным)'],
+        ['mediumSpyWin', 'Классика: Средние — Шпион угадал'],
+        ['mediumCivWin', 'Классика: Средние — Шпион ошибся (мирным)'],
+        ['hardSpyWin', 'Классика: Хардкор — Шпион угадал'],
+        ['hardCivWin', 'Классика: Хардкор — Шпион ошибся (мирным)']
+      ]
+    },
+    {
+      title: 'Если шпион использовал подсказку',
+      items: [
+        ['hintHalfSpyWin', '«Половина» — Шпион угадал'],
+        ['hintHalfCivWin', '«Половина» — Шпион ошибся (мирным)'],
+        ['hint5SpyWin', '«5 слов» — Шпион угадал'],
+        ['hint5CivWin', '«5 слов» — Шпион ошибся (мирным)'],
+        ['hint3SpyWin', '«3 слова» — Шпион угадал'],
+        ['hint3CivWin', '«3 слова» — Шпион ошибся (мирным)']
+      ]
+    },
+    {
+      title: 'Тайное голосование (Классика и Локации)',
+      items: [
+        ['voteSpyCaught', 'Выгнали шпиона (мирным)'],
+        ['voteWrongPerson', 'Выгнали мирного (шпиону)']
+      ]
+    },
+    {
+      title: 'Режим «Свой»',
+      items: [
+        ['customSpyWin', 'Шпионы угадали слово (шпионам)'],
+        ['customCivWin', 'Шпионы ошиблись (мирным)'],
+        ['customVoteCaught', 'Голосование: поймали шпиона (мирным)'],
+        ['customVoteWrong', 'Голосование: ошибка (шпионам)']
+      ]
+    }
+  ];
+
+  container.innerHTML = groups.map(g => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;letter-spacing:1.2px;color:var(--teal);font-weight:800;text-transform:uppercase;margin-bottom:8px;">${g.title}</div>
+      ${g.items.map(([key, label]) => `
+        <div class="score-item" style="padding:8px 12px;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:600;max-width:62%;">${label}</span>
+          <div class="mini-counter" style="gap:8px;">
+            <button class="mini-btn" style="width:28px;height:28px;font-size:16px;" onclick="adjustScoreRule('${key}', -1)">−</button>
+            <span id="rule-val-${key}" style="min-width:22px;text-align:center;color:var(--gold);font-weight:800;">${state.scoring[key]}</span>
+            <button class="mini-btn" style="width:28px;height:28px;font-size:16px;" onclick="adjustScoreRule('${key}', 1)">+</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function adjustScoreRule(key, delta) {
+  AudioEngine.play('click');
+  state.scoring[key] = Math.max(0, (state.scoring[key] || 0) + delta);
+  const el = document.getElementById(`rule-val-${key}`);
+  if (el) el.textContent = state.scoring[key];
+  localStorage.setItem('spy_custom_scoring', JSON.stringify(state.scoring));
+}
+
+function resetScoringDefaults() {
+  AudioEngine.play('click');
+  state.scoring = Object.assign({}, DEFAULT_SCORING);
+  localStorage.setItem('spy_custom_scoring', JSON.stringify(state.scoring));
+  renderScoringEditor();
+  }
+  evaluateSpyGuess = function(chosenWord) {
+  const isCorrect = chosenWord === state.round.secret;
+  const hint = state.round.usedHint;
+  const isLoc = state.mode === 'locations';
+  const typeWord = isLoc ? 'локацию' : 'слово';
+  const s = state.scoring;
+
+  let spyPts = 0, civPts = 0;
+  if (hint === null) {
+    if (isLoc) { spyPts = s.locSpyWin; civPts = s.locCivWin; }
+    else {
+      spyPts = s[`${state.difficulty}SpyWin`];
+      civPts = s[`${state.difficulty}CivWin`];
+    }
+  } else if (hint === 'half') {
+    spyPts = s.hintHalfSpyWin; civPts = s.hintHalfCivWin;
+  } else if (hint === '5') {
+    spyPts = s.hint5SpyWin; civPts = s.hint5CivWin;
+  } else if (hint === '3') {
+    spyPts = s.hint3SpyWin; civPts = s.hint3CivWin;
+  }
+
+  const hintLabel = hint === 'half' ? 'Подсказка «Половина»' : hint === '5' ? 'Подсказка «5 слов»' : hint === '3' ? 'Подсказка «3 слова»' : 'Без подсказки';
+
+  if (isCorrect) {
+    awardPointsToSpy(spyPts); AudioEngine.play('win');
+    showResultModal('win', 'ПОБЕДА ШПИОНА!', `Шпион угадал ${typeWord}. ${hintLabel}: шпион получает +${spyPts} баллов!`, () => openFinalRevealOnly());
+  } else {
+    awardPointsToCivilians(civPts); AudioEngine.play('lose');
+    showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНА!', `Шпион не угадал. Правильный ответ: ${state.round.secret.toUpperCase()}. ${hintLabel}: мирные получают +${civPts} баллов!`, () => openFinalRevealOnly());
+  }
+};
+
+tallyVotes = function() {
+  let maxVotes = 0, leaders =;
+  for (const [pIdxStr, count] of Object.entries(state.voting.votes)) {
+    const pIdx = parseInt(pIdxStr, 10);
+    if (count > maxVotes) { maxVotes = count; leaders = [pIdx]; }
+    else if (count === maxVotes) leaders.push(pIdx);
+  }
+  if (leaders.length !== 1) {
+    showResultModal('neutral', 'НИЧЬЯ!', 'Ничья! Никого не выгнали. Возвращаемся к обсуждению.', () => goScreen('screen-discuss'));
+    return;
+  }
+  const accusedIdx = leaders;
+  const accusedName = state.players[accusedIdx].name;
+  const spies = state.round.spyIndices || [state.round.spyIndex];
+  const isCaught = spies.includes(accusedIdx);
+  const s = state.scoring;
+
+  if (isCaught) {
+    const pts = state.mode === 'custom' ? s.customVoteCaught : s.voteSpyCaught;
+    if (!state.round.pointsAwarded) {
+      state.round.pointsAwarded = true;
+      for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players[i].score += pts;
+    }
+    AudioEngine.play('win');
+    showResultModal('win', 'ШПИОН РАСКРЫТ!', `Голосованием выгнали: ${accusedName}. Это был шпион! Мирные получают +${pts} баллов.`, () => openFinalRevealOnly());
+  } else {
+    const pts = state.mode === 'custom' ? s.customVoteWrong : s.voteWrongPerson;
+    if (!state.round.pointsAwarded) {
+      state.round.pointsAwarded = true;
+      spies.forEach(i => { state.players[i].score += pts; });
+    }
+    AudioEngine.play('lose');
+    showResultModal('lose', 'ПОБЕДА ШПИОНА!', `Голосованием выгнали: ${accusedName}. Ошибка! Предатели (${getSpyNamesText()}) получают +${pts} баллов!`, () => openFinalRevealOnly());
+  }
+};
+
+resolveCustomGuess = function(isCorrect) {
+  const spies = state.round.spyIndices ||;
+  const s = state.scoring;
+  document.getElementById('custom-guess-controls').style.display = 'none';
+  if (isCorrect) {
+    spies.forEach(i => { state.players[i].score += s.customSpyWin; });
+    AudioEngine.play('win');
+    showResultModal('win', 'ПОБЕДА ШПИОНОВ!', `Шпионы (${getSpyNamesText()}) угадали слово «${state.round.secret.toUpperCase()}» и получают +${s.customSpyWin} баллов!`, () => openFinalRevealOnly());
+  } else {
+    for (let i = 0; i < state.playerCount; i++) if (!spies.includes(i)) state.players[i].score += s.customCivWin;
+    AudioEngine.play('lose');
+    showResultModal('lose', 'ПОРАЖЕНИЕ ШПИОНОВ!', `Шпионы ошиблись! Правильное слово: ${state.round.secret.toUpperCase()}. Мирные получают +${s.customCivWin} баллов!`, () => openFinalRevealOnly());
+  }
+};
+</script>
+<script>
+function saveAllAppSettings() {
+  const data = {
+    sound: state.settings.sound,
+    music: state.settings.music,
+    voting: state.settings.voting,
+    targetScore: state.settings.targetScore,
+    showCategoryHint: state.settings.showCategoryHint,
+    playerCount: state.playerCount,
+    players: state.players
+  };
+  localStorage.setItem('spy_app_state', JSON.stringify(data));
+}
+
+(function loadAllAppSettings() {
+  try {
+    const raw = localStorage.getItem('spy_app_state');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (typeof d.sound === 'boolean') state.settings.sound = d.sound;
+    if (typeof d.music === 'boolean') state.settings.music = d.music;
+    if (typeof d.voting === 'boolean') state.settings.voting = d.voting;
+    if (typeof d.targetScore === 'number') state.settings.targetScore = d.targetScore;
+    if (typeof d.showCategoryHint === 'boolean') state.settings.showCategoryHint = d.showCategoryHint;
+    if (typeof d.playerCount === 'number') state.playerCount = d.playerCount;
+    if (Array.isArray(d.players) && d.players.length) state.players = d.players;
+
+    const sb = document.getElementById('setting-sound-btn');
+    if (sb) sb.textContent = `Звук: ${state.settings.sound ? 'Вкл' : 'Выкл'}`;
+    const mb = document.getElementById('setting-music-btn');
+    if (mb) mb.textContent = `Музыка: ${state.settings.music ? 'Вкл' : 'Выкл'}`;
+    const vb = document.getElementById('setting-vote-btn');
+    if (vb) vb.textContent = `Голосование: ${state.settings.voting ? 'Вкл' : 'Выкл'}`;
+    const cb = document.getElementById('setting-cathint-btn');
+    if (cb) cb.textContent = `Подсказка категории: ${state.settings.showCategoryHint ? 'Вкл' : 'Выкл'}`;
+    const ts = document.getElementById('target-score-display');
+    if (ts) ts.textContent = state.settings.targetScore;
+    const pc = document.getElementById('player-count-display');
+    if (pc) pc.textContent = state.playerCount;
+  } catch (e) {}
+})();
+
+const _s1 = toggleSoundSetting; toggleSoundSetting = function() { _s1(); saveAllAppSettings(); };
+const _s2 = toggleVoteSetting; toggleVoteSetting = function() { _s2(); saveAllAppSettings(); };
+const _s3 = changeTargetScore; changeTargetScore = function(d) { _s3(d); saveAllAppSettings(); };
+const _s4 = toggleCatHintSetting; toggleCatHintSetting = function() { _s4(); saveAllAppSettings(); };
+const _s5 = updatePlayerName; updatePlayerName = function(i, v) { _s5(i, v); saveAllAppSettings(); };
+const _s6 = changePlayerCount; changePlayerCount = function(d) { _s6(d); saveAllAppSettings(); };
+const _s7 = resetAllScores; resetAllScores = function() { _s7(); saveAllAppSettings(); };
+
+(function injectFactoryReset() {
+  const box = document.querySelector('#modal-settings .modal-box');
+  if (box && !document.getElementById('factory-reset-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'factory-reset-btn';
+    btn.className = 'btn-dark';
+    btn.style.cssText = 'width:100%;margin-top:8px;color:var(--text-muted);font-size:13px;';
+    btn.textContent = 'Сброс до заводских настроек';
+    btn.onclick = function() {
+      if (confirm('Сбросить все настройки, правила баллов, имена и счёт до заводских?')) {
+        localStorage.removeItem('spy_app_state');
+        localStorage.removeItem('spy_custom_scoring');
+        location.reload();
+      }
+    };
+    box.appendChild(btn);
+  }
+  const mb = document.getElementById('setting-music-btn');
+  if (mb) {
+    const origClick = mb.onclick;
+    mb.onclick = function() { if (origClick) origClick(); saveAllAppSettings(); };
+  }
+})();
 </script>
 </body>
 </html>
+
+
 
 
